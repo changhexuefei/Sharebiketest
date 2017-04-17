@@ -1,0 +1,274 @@
+package com.dcch.sharebiketest;
+
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.baidu.location.BDLocation;
+import com.baidu.location.BDLocationListener;
+import com.baidu.location.LocationClient;
+import com.baidu.location.LocationClientOption;
+import com.baidu.mapapi.map.BaiduMap;
+import com.baidu.mapapi.map.BitmapDescriptor;
+import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.MapStatus;
+import com.baidu.mapapi.map.MapStatusUpdateFactory;
+import com.baidu.mapapi.map.MapView;
+import com.baidu.mapapi.map.Marker;
+import com.baidu.mapapi.map.MarkerOptions;
+import com.baidu.mapapi.map.MyLocationConfiguration;
+import com.baidu.mapapi.map.MyLocationData;
+import com.baidu.mapapi.map.OverlayOptions;
+import com.baidu.mapapi.model.LatLng;
+import com.dcch.sharebiketest.base.BaseActivity;
+import com.dcch.sharebiketest.http.Api;
+import com.dcch.sharebiketest.moudle.home.BikeInfo;
+import com.dcch.sharebiketest.moudle.listener.MyOrientationListener;
+import com.dcch.sharebiketest.utils.LogUtils;
+import com.dcch.sharebiketest.utils.ToastUtils;
+import com.zhy.http.okhttp.OkHttpUtils;
+import com.zhy.http.okhttp.callback.StringCallback;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import butterknife.BindView;
+import butterknife.OnClick;
+import okhttp3.Call;
+
+//@RuntimePermissions
+public class MainActivity extends BaseActivity {
+    @BindView(R.id.testMapView)
+    MapView mTestMapView;
+    @BindView(R.id.MyCenter)
+    ImageView mMyCenter;
+    @BindView(R.id.scan)
+    TextView mScan;
+    @BindView(R.id.btn_my_location)
+    ImageButton mBtnMyLocation;
+    private BaiduMap mMap;
+    private LocationClient mLocationClient;//定位的客户端
+    private float mCurrentAccracy;//当前的精度
+    private int mXDirection;//方向传感器X方向的值
+    private MyLocationConfiguration.LocationMode mCurrentMode = MyLocationConfiguration.LocationMode.NORMAL;//当前定位的模式
+    private volatile boolean isFristLocation = true;//是否是第一次定位
+    private MyOrientationListener myOrientationListener;//方向传感器的监听器
+    private double mCurrentLantitude;//最新一次的经纬度
+    private double mCurrentLongitude;
+    public MyLocationListener mMyLocationListener;//定位的监听器
+    private LatLng currentLatLng;
+    private double changeLatitude, changeLongitude;
+    private List<BikeInfo> bikeInfos;
+    private BikeInfo bikeInfo;
+    private double mLat1;
+    private double mLng1;
+    Marker mMarker = null;
+
+    @Override
+    protected int getLayoutId() {
+        return R.layout.activity_main;
+    }
+
+    @Override
+    protected void initData() {
+        mMap = mTestMapView.getMap();
+        bikeInfos = new ArrayList<BikeInfo>();
+        // 初始化定位
+        initMyLocation();
+        // 初始化传感器
+        initOritationListener();
+    }
+
+    private void initOritationListener() {
+        myOrientationListener = new MyOrientationListener(getApplicationContext());
+        myOrientationListener.setOnOrientationListener(new MyOrientationListener.OnOrientationListener() {
+            @Override
+            public void onOrientationChanged(float x) {
+                mXDirection = (int) x;
+                // 构造定位数据
+                MyLocationData locData = new MyLocationData.Builder()
+                        .accuracy(mCurrentAccracy)
+                        // 此处设置开发者获取到的方向信息，顺时针0-360
+                        .direction(mXDirection)
+                        .latitude(mCurrentLantitude)
+                        .longitude(mCurrentLongitude)
+                        .build();
+                // 设置定位数据
+                mMap.setMyLocationData(locData);
+//                 设置自定义图标
+//                BitmapDescriptor mCurrentMarker =
+//                        fromResource(R.mipmap.search_center_ic);
+                MyLocationConfiguration config = new MyLocationConfiguration(
+                        mCurrentMode, true, null);
+                mMap.setMyLocationConfigeration(config);
+            }
+        });
+
+
+
+    }
+
+    private void initMyLocation() {
+        // 定位初始化
+        mLocationClient = new LocationClient(this);
+        // 开启定位图层
+        mMap.setMyLocationEnabled(true);
+        mMyLocationListener = new MyLocationListener();
+        mLocationClient.registerLocationListener(mMyLocationListener);
+        // 设置定位的相关配置
+        LocationClientOption option = new LocationClientOption();
+        option.setOpenGps(true);// 打开gps
+        option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);// 设置定位模式
+        option.setCoorType("bd09ll"); // 设置坐标类型
+        option.setScanSpan(1000);//可选，默认0，即仅定位一次，设置发起定位请求的间隔需要大于等于1000ms才是有效的
+        option.setIsNeedAddress(true);//可选，设置是否需要地址信息，默认不需要
+        option.setIsNeedLocationDescribe(true);//可选，设置是否需要地址描述
+        option.setNeedDeviceDirect(false);//可选，设置是否需要设备方向结果
+        option.setLocationNotify(false);//可选，默认false，设置是否当gps有效时按照1S1次频率输出GPS结果
+        option.setIgnoreKillProcess(true);//可选，默认true，定位SDK内部是一个SERVICE，并放到了独立进程，设置是否在stop的时候杀死这个进程，默认不杀死
+        option.setIsNeedLocationDescribe(true);//可选，默认false，设置是否需要位置语义化结果，可以在BDLocation.getLocationDescribe里得到，结果类似于“在北京天安门附近”
+        option.setIsNeedLocationPoiList(true);//可选，默认false，设置是否需要POI结果，可以在BDLocation.getPoiList里得到
+        option.SetIgnoreCacheException(false);//可选，默认false，设置是否收集CRASH信息，默认收集
+        mLocationClient.setLocOption(option);
+    }
+
+    @OnClick({R.id.MyCenter, R.id.scan, R.id.btn_my_location})
+    public void onViewClicked(View view) {
+        switch (view.getId()) {
+            case R.id.MyCenter:
+                break;
+            case R.id.scan:
+                break;
+            case R.id.btn_my_location:
+                break;
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //在activity执行onDestroy时执行mMapView.onDestroy()，实现地图生命周期管理
+        mTestMapView.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //在activity执行onResume时执行mMapView. onResume ()，实现地图生命周期管理
+        mTestMapView.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        //在activity执行onPause时执行mMapView. onPause ()，实现地图生命周期管理
+        mTestMapView.onPause();
+    }
+
+
+    //设置中心点
+    private void setUserMapCenter(Double Lantitude, Double Longitude) {
+        LatLng ll = new LatLng(Lantitude, Longitude);
+        MapStatus.Builder builder = new MapStatus.Builder();
+        //地图缩放比设置为18
+        builder.target(ll).zoom(18.0f);
+        mMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
+    }
+
+    //获得自行车信息的方法
+    private void getBikeInfo(double Lantitude, double Longitude) {
+        String lat = Lantitude + "";
+        String lng = Longitude + "";
+        if (lat != null && !lat.equals("") && lng != null && !lng.equals("")) {
+            Map<String, String> map = new HashMap<>();
+            map.put("lng", lng);
+            map.put("lat", lat);
+            OkHttpUtils.post().url(Api.BASE_URL + Api.GINPUT).params(map).build().execute(new StringCallback() {
+                @Override
+                public void onError(Call call, Exception e, int id) {
+                    LogUtils.e(e.getMessage());
+                    ToastUtils.showShort(MainActivity.this, "抱歉，服务器正忙！");
+                }
+
+                @Override
+                public void onResponse(String response, int id) {
+                    Log.d("所有的数据", response);
+                    try {
+                        JSONArray jsonArray = new JSONArray(response);
+                        if (jsonArray.length() > 0) {
+                            for (int i = 0; i < jsonArray.length(); i++) {
+                                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                                Log.d("自行车", jsonObject + "");
+                                bikeInfo = new BikeInfo();
+                                bikeInfo.setAddress(jsonObject.getString("address"));
+                                bikeInfo.setBicycleId(jsonObject.getInt("bicycleId"));
+                                bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
+                                bikeInfo.setLatitude(jsonObject.getString("latitude"));
+                                bikeInfo.setLongitude(jsonObject.getString("longitude"));
+                                bikeInfo.setUnitPrice(jsonObject.getInt("unitPrice"));
+                                bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
+                                bikeInfos.add(bikeInfo);
+                            }
+                            addOverlay(bikeInfos);
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+    }
+
+    //百度地图添加覆盖物的方法
+    private void addOverlay(List bikeInfos) {
+        if (bikeInfos.size() > 0) {
+            //清空地图
+            mMap.clear();
+            //创建marker的显示图标
+            BitmapDescriptor bitmap = BitmapDescriptorFactory.fromResource(R.mipmap.bike_icon);
+            LatLng latLng = null;
+
+            List<Double> doubles = new ArrayList<>();
+            for (int i = 0; i < bikeInfos.size(); i++) {
+                bikeInfo = (BikeInfo) bikeInfos.get(i);
+                String lat = bikeInfo.getLatitude();
+                String lng = bikeInfo.getLongitude();
+                mLat1 = Double.parseDouble(lat);
+                mLng1 = Double.parseDouble(lng);
+                latLng = new LatLng(mLat1, mLng1);
+//                //两点之间直线距离的算法
+//                double distance1 = DistanceUtil.getDistance(latLng, currentLatLng);
+//                doubles.add(distance1);
+                //设置marker
+                OverlayOptions options = new MarkerOptions()
+                        .position(latLng)//设置位置
+                        .icon(bitmap)//设置图标样式
+                        .zIndex(i) // 设置marker所在层级
+                        .draggable(true); // 设置手势拖拽;
+                //添加marker
+                mMarker = (Marker) mMap.addOverlay(options);
+                //使用marker携带info信息，当点击事件的时候可以通过marker获得info信息
+                Bundle bundle = new Bundle();
+                // bikeInfo必须实现序列化接口
+                bundle.putSerializable("bikeInfo", bikeInfo);
+                mMarker.setExtraInfo(bundle);
+            }
+
+        } else {
+            ToastUtils.showLong(this, "当前周围没有车辆");
+        }
+
+    }
+
+
+}

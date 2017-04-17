@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.dcch.sharebiketest.MainActivity">
+
+    <FrameLayout
+        android:id="@+id/top"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@color/colorHeading"
+        android:layout_alignParentTop="true">
+
+        <ImageView
+            android:id="@+id/MyCenter"
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical"
+            android:padding="16dp"
+            android:src="@mipmap/menu" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="@string/share_title"
+            android:textColor="@color/common"
+            android:textSize="16sp" />
+
+    </FrameLayout>
+
+
+    <com.baidu.mapapi.map.MapView
+        android:layout_below="@+id/top"
+        android:id="@+id/testMapView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </com.baidu.mapapi.map.MapView>
+
+    <TextView
+        android:layout_marginBottom="40dp"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/scan"
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/shape_scan"
+        android:drawableLeft="@mipmap/scan"
+        android:drawablePadding="20dp"
+        android:enabled="true"
+        android:gravity="center_vertical"
+        android:paddingBottom="15dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingTop="15dp"
+        android:text="@string/unlocking"
+        android:textColor="#ffffff"
+        android:textSize="16sp" />
+
+    <ImageButton
+        android:id="@+id/btn_my_location"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="36dp"
+        android:layout_marginLeft="8dp"
+        android:background="@drawable/selector_map" />
+
+
+</RelativeLayout>
