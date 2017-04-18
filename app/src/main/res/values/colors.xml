@@ -5,4 +5,6 @@
     <color name="colorAccent">#FF4081</color>
     <color name="colorHeading">#41c0dc</color>
     <color name="common">#262262</color>
+    <color name="colorTitle">#F8941D</color>
+    <color name="lineColor">#f4f0f0</color>
 </resources>
