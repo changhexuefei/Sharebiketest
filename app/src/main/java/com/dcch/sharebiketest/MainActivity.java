@@ -1,5 +1,6 @@
 package com.dcch.sharebiketest;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.IdRes;
 import android.util.Log;
@@ -28,8 +29,10 @@ import com.baidu.mapapi.map.OverlayOptions;
 import com.baidu.mapapi.model.LatLng;
 import com.dcch.sharebiketest.base.BaseActivity;
 import com.dcch.sharebiketest.http.Api;
+import com.dcch.sharebiketest.libzxing.zxing.activity.CaptureActivity;
 import com.dcch.sharebiketest.moudle.home.BikeInfo;
 import com.dcch.sharebiketest.moudle.listener.MyOrientationListener;
+import com.dcch.sharebiketest.utils.JsonUtils;
 import com.dcch.sharebiketest.utils.LogUtils;
 import com.dcch.sharebiketest.utils.ToastUtils;
 import com.zhy.http.okhttp.OkHttpUtils;
@@ -82,6 +85,7 @@ public class MainActivity extends BaseActivity {
     private double mLat1;
     private double mLng1;
     Marker mMarker = null;
+    private String result;
 
     @Override
     protected int getLayoutId() {
@@ -180,12 +184,73 @@ public class MainActivity extends BaseActivity {
             case R.id.MyCenter:
                 break;
             case R.id.scan:
+                Intent i1 = new Intent(MainActivity.this, CaptureActivity.class);
+                startActivityForResult(i1, 0);
                 break;
             case R.id.btn_my_location:
                 setUserMapCenter(mCurrentLantitude, mCurrentLongitude);
                 break;
         }
     }
+    //扫一扫二维码时的回调
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (data != null) {
+            Bundle bundle = data.getExtras();
+            switch (requestCode) {
+                case 0:
+                    if (bundle != null) {
+                        result = bundle.getString("result");
+//                        openScan(uID, phone, result, mToken);
+//                        Intent intent = new Intent(MainActivity.this, UnlockProgressActivity.class);
+//                        startActivity(intent);
+                        ToastUtils.showLong(this, result);
+                    }
+                    break;
+
+            }
+
+        }
+    }
+    //扫码开锁的方法
+    private void openScan(final String uID, String phone, final String result, final String mToken) {
+        if (phone != null && !phone.equals("") && result != null && !result.equals("")) {
+            Map<String, String> map = new HashMap<>();
+            map.clear();
+            map.put("userId", uID);
+            map.put("phone", phone);
+            map.put("bicycleNo", result);
+            map.put("token", mToken);
+            LogUtils.d("开锁", phone);
+            LogUtils.d("开锁", result);
+            LogUtils.d("开锁", uID);
+            OkHttpUtils.post().url(Api.BASE_URL + Api.OPENSCAN).params(map).build().execute(new StringCallback() {
+                @Override
+                public void onError(Call call, Exception e, int id) {
+                    if (!e.equals("") && e != null) {
+                        LogUtils.e(e.getMessage());
+                    }
+                    ToastUtils.showShort(MainActivity.this, "服务器忙，请稍后重试");
+                }
+
+                @Override
+                public void onResponse(String response, int id) {
+                    Log.d("开锁", response);
+                    ToastUtils.showShort(MainActivity.this, response);
+                    if (JsonUtils.isSuccess(response)) {
+                        LogUtils.d("开锁", "什么情况！");
+//                        EventBus.getDefault().post(new MessageEvent(), "on");
+
+                    } else {
+//                        EventBus.getDefault().post(new MessageEvent(), "off");
+                    }
+                }
+            });
+        }
+    }
+
+
 
     //设置中心点
     private void setUserMapCenter(Double Lantitude, Double Longitude) {
@@ -429,13 +494,13 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    public void getMyLocation() {
-        MyLocationData data = new MyLocationData.Builder()
-                .accuracy(1000)//范围半径，单位：米
-                .latitude(mCurrentLantitude)//
-                .longitude(mCurrentLongitude).build();
-        mMap.setMyLocationData(data);
-    }
+//    public void getMyLocation() {
+//        MyLocationData data = new MyLocationData.Builder()
+//                .accuracy(1000)//范围半径，单位：米
+//                .latitude(mCurrentLantitude)//
+//                .longitude(mCurrentLongitude).build();
+//        mMap.setMyLocationData(data);
+//    }
 
 
     @Override

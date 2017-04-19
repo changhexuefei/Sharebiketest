@@ -64,14 +64,14 @@
             android:id="@+id/exception"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="异常车"/>
+            android:text="异常单车"/>
 
         <RadioButton
             style="@style/home_selector"
             android:id="@+id/trouble"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="故障车"/>
+            android:text="故障单车"/>
     </RadioGroup>
 
 
