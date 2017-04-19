@@ -38,8 +38,9 @@ public class MyApp extends Application {
     public void onCreate() {
         super.onCreate();
         //注意该方法要再setContentView方法之前实现
-        SDKInitializer.initialize(getApplicationContext());
         mContext = getApplicationContext();
+        SDKInitializer.initialize(mContext);
+
         //初始化OkHttp
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .addInterceptor(new LoggerInterceptor("HttpUtils"))

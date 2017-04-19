@@ -7,4 +7,9 @@
     <string name="splash_tip_one">绿色出行</string>
     <string name="splash_tip_two">麒乐无穷</string>
     <string name="guide_tips">立刻体验</string>
+    <string name="capture_tips">对准车上的二维码</string>
+    <string name="manual_input">输入单车编号</string>
+    <string name="open">打开手电筒</string>
+    <string name="close">关闭手电筒</string>
+    <string name="verify">确认</string>
 </resources>

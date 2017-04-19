@@ -10,9 +10,9 @@
     <FrameLayout
         android:id="@+id/top"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="@color/colorHeading"
-        android:layout_alignParentTop="true">
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/colorHeading">
 
         <ImageView
             android:id="@+id/MyCenter"
@@ -20,7 +20,7 @@
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
             android:padding="16dp"
-            android:src="@mipmap/menu" />
+            android:src="@mipmap/menu"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -29,26 +29,59 @@
             android:gravity="center"
             android:text="@string/share_title"
             android:textColor="@color/common"
-            android:textSize="16sp" />
+            android:textSize="16sp"/>
 
     </FrameLayout>
 
 
     <com.baidu.mapapi.map.MapView
-        android:layout_below="@+id/top"
         android:id="@+id/testMapView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_below="@+id/subclauses">
 
     </com.baidu.mapapi.map.MapView>
 
+    <RadioGroup
+        android:id="@+id/subclauses"
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:layout_below="@+id/top"
+        android:background="@color/colorHeading"
+        android:orientation="horizontal"
+        android:paddingLeft="40dp"
+        android:paddingRight="40dp">
+
+        <RadioButton
+            style="@style/home_selector"
+            android:id="@+id/all"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="全部单车"/>
+
+        <RadioButton
+            style="@style/home_selector"
+            android:id="@+id/exception"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="异常单车"/>
+
+        <RadioButton
+            style="@style/home_selector"
+            android:id="@+id/trouble"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="故障单车"/>
+    </RadioGroup>
+
+
     <TextView
-        android:layout_marginBottom="40dp"
-        android:layout_alignParentBottom="true"
         android:id="@+id/scan"
         android:layout_width="150dp"
         android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
+        android:layout_marginBottom="40dp"
         android:background="@drawable/shape_scan"
         android:drawableLeft="@mipmap/scan"
         android:drawablePadding="20dp"
@@ -60,7 +93,7 @@
         android:paddingTop="15dp"
         android:text="@string/unlocking"
         android:textColor="#ffffff"
-        android:textSize="16sp" />
+        android:textSize="16sp"/>
 
     <ImageButton
         android:id="@+id/btn_my_location"
@@ -69,7 +102,7 @@
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="36dp"
         android:layout_marginLeft="8dp"
-        android:background="@drawable/selector_map" />
+        android:background="@drawable/selector_map"/>
 
 
 </RelativeLayout>
