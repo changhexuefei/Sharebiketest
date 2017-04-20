@@ -21,8 +21,8 @@ public class LoginActivity extends BaseActivity implements ILoginView {
     TextView mTitle;
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
-    @BindView(R.id.userPhone)
-    EditText mUserPhone;
+    @BindView(R.id.userName)
+    EditText mUserName;
     @BindView(R.id.pwd)
     EditText mPwd;
     @BindView(R.id.login_confirm)
@@ -36,12 +36,11 @@ public class LoginActivity extends BaseActivity implements ILoginView {
     @Override
     protected void initData() {
         mToolbar.setTitle("");
-        mTitle.setText(getResources().getString(R.string.phone_verification));
+        mTitle.setText(getResources().getString(R.string.user_login));
         setSupportActionBar(mToolbar);
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                EventBus.getDefault().post(new MessageEvent(), "show");
                 finish();
             }
         });
@@ -51,12 +50,12 @@ public class LoginActivity extends BaseActivity implements ILoginView {
     @OnClick(R.id.login_confirm)
     public void onViewClicked() {
         mLoginConfirm.setEnabled(false);
-        loginPresenter.doLogin(mUserPhone.getText().toString(), mPwd.getText().toString());
+        loginPresenter.doLogin(mUserName.getText().toString(), mPwd.getText().toString());
     }
 
     @Override
     public void onClearText() {
-        mUserPhone.setText("");
+        mUserName.setText("");
         mPwd.setText("");
     }
 

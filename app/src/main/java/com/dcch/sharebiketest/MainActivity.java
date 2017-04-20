@@ -1,8 +1,10 @@
 package com.dcch.sharebiketest;
 
+import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.IdRes;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
@@ -27,14 +29,21 @@ import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.map.OverlayOptions;
 import com.baidu.mapapi.model.LatLng;
+import com.baidu.mapapi.search.route.PlanNode;
+import com.baidu.mapapi.search.route.RoutePlanSearch;
+import com.baidu.mapapi.search.route.WalkingRoutePlanOption;
 import com.dcch.sharebiketest.base.BaseActivity;
 import com.dcch.sharebiketest.http.Api;
 import com.dcch.sharebiketest.libzxing.zxing.activity.CaptureActivity;
 import com.dcch.sharebiketest.moudle.home.BikeInfo;
 import com.dcch.sharebiketest.moudle.listener.MyOrientationListener;
+import com.dcch.sharebiketest.overlayutil.OverlayManager;
+import com.dcch.sharebiketest.ui.LoginActivity;
 import com.dcch.sharebiketest.utils.JsonUtils;
 import com.dcch.sharebiketest.utils.LogUtils;
+import com.dcch.sharebiketest.utils.SPUtils;
 import com.dcch.sharebiketest.utils.ToastUtils;
+import com.dcch.sharebiketest.view.SelectPicPopupWindow;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.StringCallback;
 
@@ -46,11 +55,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import butterknife.BindView;
 import butterknife.OnClick;
 import okhttp3.Call;
+import permissions.dispatcher.NeedsPermission;
+import permissions.dispatcher.RuntimePermissions;
 
+@RuntimePermissions
 public class MainActivity extends BaseActivity {
     @BindView(R.id.testMapView)
     MapView mTestMapView;
@@ -86,6 +99,14 @@ public class MainActivity extends BaseActivity {
     private double mLng1;
     Marker mMarker = null;
     private String result;
+    private LatLng clickMarkLatlng;
+    private boolean isFirst = true;
+    private String bicycleNo;
+    private boolean hasPlanRoute = false;
+    private PlanNode endNodeStr, startNodeStr;
+    OverlayManager routeOverlay = null;//该类提供一个能够显示和管理多个Overlay的基类
+    RoutePlanSearch mRPSearch = null;    // 搜索模块，也可去掉地图模块独立使用
+    private SelectPicPopupWindow menuWindow = null; // 自定义弹出框
 
     @Override
     protected int getLayoutId() {
@@ -94,7 +115,11 @@ public class MainActivity extends BaseActivity {
 
     @Override
     protected void initData() {
+        MainActivityPermissionsDispatcher.initPermissionWithCheck(this);
+        showCamera();
+        initPermission();
         mMap = mTestMapView.getMap();
+        mRPSearch = RoutePlanSearch.newInstance();
         LogUtils.d("地图", mMap + "");
         bikeInfos = new ArrayList<BikeInfo>();
         mAll.setChecked(true);
@@ -110,7 +135,7 @@ public class MainActivity extends BaseActivity {
         mSubclauses.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup radioGroup, @IdRes int i) {
-                switch (i){
+                switch (i) {
                     case R.id.all:
                         mMap.clear();
                         getBikeInfo(mCurrentLantitude, mCurrentLongitude);
@@ -184,6 +209,7 @@ public class MainActivity extends BaseActivity {
             case R.id.MyCenter:
                 break;
             case R.id.scan:
+                MainActivityPermissionsDispatcher.showCameraWithCheck(MainActivity.this);
                 Intent i1 = new Intent(MainActivity.this, CaptureActivity.class);
                 startActivityForResult(i1, 0);
                 break;
@@ -192,6 +218,7 @@ public class MainActivity extends BaseActivity {
                 break;
         }
     }
+
     //扫一扫二维码时的回调
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -213,6 +240,22 @@ public class MainActivity extends BaseActivity {
 
         }
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        MainActivityPermissionsDispatcher.onRequestPermissionsResult(this, requestCode, grantResults);
+    }
+
+    @NeedsPermission(Manifest.permission.CAMERA)
+    void showCamera() {
+    }
+
+    @NeedsPermission({Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION})
+    void initPermission() {
+
+    }
+
     //扫码开锁的方法
     private void openScan(final String uID, String phone, final String result, final String mToken) {
         if (phone != null && !phone.equals("") && result != null && !result.equals("")) {
@@ -251,7 +294,6 @@ public class MainActivity extends BaseActivity {
     }
 
 
-
     //设置中心点
     private void setUserMapCenter(Double Lantitude, Double Longitude) {
         LatLng ll = new LatLng(Lantitude, Longitude);
@@ -280,6 +322,7 @@ public class MainActivity extends BaseActivity {
             mCurrentLantitude = location.getLatitude();
             mCurrentLongitude = location.getLongitude();
             currentLatLng = new LatLng(mCurrentLantitude, mCurrentLongitude);
+            startNodeStr = PlanNode.withLocation(new LatLng(mCurrentLantitude, mCurrentLongitude));
 //            BitmapDescriptor mCurrentMarker = BitmapDescriptorFactory
 //                    .fromResource(R.mipmap.search_center_ic);
             //不设置bitmapDescriptor时代表默认使用百度地图图标
@@ -347,7 +390,7 @@ public class MainActivity extends BaseActivity {
 
                             }
                             addOverlay(bikeInfos);
-                            LogUtils.d("数量",bikeInfos.size()+"1");
+                            LogUtils.d("数量", bikeInfos.size() + "1");
                         }
 
                     } catch (JSONException e) {
@@ -395,7 +438,7 @@ public class MainActivity extends BaseActivity {
 
                             }
                             addOverlay(bikeInfos);
-                            LogUtils.d("数量",bikeInfos.size()+"2");
+                            LogUtils.d("数量", bikeInfos.size() + "2");
                         }
 
                     } catch (JSONException e) {
@@ -414,7 +457,7 @@ public class MainActivity extends BaseActivity {
             Map<String, String> map = new HashMap<>();
             map.put("lng", lng);
             map.put("lat", lat);
-            LogUtils.d("所有的数据",lng+"\n"+lat);
+            LogUtils.d("所有的数据", lng + "\n" + lat);
             OkHttpUtils.post().url(Api.BASE_URL + Api.FINDBICYCLETROUBLE).params(map).build().execute(new StringCallback() {
                 @Override
                 public void onError(Call call, Exception e, int id) {
@@ -442,7 +485,7 @@ public class MainActivity extends BaseActivity {
                                 bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
                                 bikeInfos.add(bikeInfo);
                             }
-                            LogUtils.d("数量",bikeInfos.size()+"3");
+                            LogUtils.d("数量", bikeInfos.size() + "3");
                             addOverlay(bikeInfos);
                         }
 
@@ -494,14 +537,105 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-//    public void getMyLocation() {
-//        MyLocationData data = new MyLocationData.Builder()
-//                .accuracy(1000)//范围半径，单位：米
-//                .latitude(mCurrentLantitude)//
-//                .longitude(mCurrentLongitude).build();
-//        mMap.setMyLocationData(data);
-//    }
+    //百度地图的覆盖物点击方法
+    private void clickBaiduMapMark() {
+        final TreeSet<Integer> integers = new TreeSet<>();
+        mMap.setOnMarkerClickListener(new BaiduMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(final Marker marker) {
+                if (marker.getExtraInfo() != null && marker != null) {
+//                    if (isFirst) {
+                        int zIndex = marker.getZIndex();
+                        integers.add(Integer.valueOf(zIndex));
+                        LogUtils.d("覆盖物", zIndex + "\n" + integers.size());
+//                        isFirst = false;
+                        Bundle bundle = marker.getExtraInfo();
+                        clickMarkLatlng = marker.getPosition();
+                        bikeInfo = (BikeInfo) bundle.getSerializable("bikeInfo");
+                        if (bikeInfo != null) {
+                            bicycleNo = bikeInfo.getBicycleNo() + "";
+                            if (menuWindow == null || !menuWindow.isShowing()) {
+                                showMenuWindow(bikeInfo);
+                            }
+                            updateBikeInfo(bikeInfo);
+                        }
+//                    }
+                }
+                mMap.clear();
+                addOverlay(bikeInfos);//
+                return true;
+            }
 
+        });
+
+    }
+
+    private void updateBikeInfo(BikeInfo bikeInfo) {
+        if (!hasPlanRoute) {
+            this.bikeInfo = bikeInfo;
+            Double doulat = Double.valueOf(bikeInfo.getLatitude());
+            Double doulon = Double.valueOf(bikeInfo.getLongitude());
+            endNodeStr = PlanNode.withLocation(new LatLng(doulat, doulon));
+            drawPlanRoute(endNodeStr);
+        }
+    }
+
+    private void showMenuWindow(BikeInfo bikeInfo) {
+        if (menuWindow == null) {
+            menuWindow = new SelectPicPopupWindow(MainActivity.this, bikeInfo, itemsOnClick);
+        }
+        menuWindow.setFocusable(false);
+        menuWindow.setOutsideTouchable(false);
+        menuWindow.showAsDropDown(findViewById(R.id.top));
+//        if (SPUtils.isLogin()) {
+//            if (cashStatus == 1 && status == 1) {
+//                menuWindow.mOrder.setText("预约用车");
+//            } else if (cashStatus == 0 && status == 0) {
+//                menuWindow.mOrder.setText("完成注册即可骑单车");
+//            } else if (cashStatus == 1 && status == 0) {
+//                menuWindow.mOrder.setText("完成注册即可骑单车");
+//            } else if (cashStatus == 0 && status == 1) {
+//                menuWindow.mOrder.setText("预约用车");
+//            }
+//        } else {
+//            menuWindow.mOrder.setText("立即登录即可骑单车");
+//        }
+    }
+
+    //预约车辆的点击监听事件
+    View.OnClickListener itemsOnClick = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.order:
+                    if (SPUtils.isLogin()) {
+                        if (menuWindow != null && menuWindow.isShowing()) {
+                            menuWindow.dismiss();
+                        }
+                        mMap.clear();
+                        addOverlay(bikeInfos);
+                    } else {
+//                        mInstructions.setVisibility(View.VISIBLE);
+                        startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                        menuWindow.setFocusable(true);
+                        menuWindow.dismiss();
+                        mMap.clear();
+                        addOverlay(bikeInfos);
+                        setUserMapCenter(mCurrentLantitude, mCurrentLongitude);
+                    }
+            }
+        }
+    };
+
+    private void drawPlanRoute(PlanNode endNodeStr) {
+        if (routeOverlay != null)
+            routeOverlay.removeFromMap();
+        if (endNodeStr != null) {
+            Log.d("gao", "changeLatitude-----startNode--------" + startNodeStr.getLocation().latitude);
+            Log.d("gao", "changeLongitude-----startNode--------" + startNodeStr.getLocation().longitude);
+            mRPSearch.walkingSearch((new WalkingRoutePlanOption()).from(startNodeStr).to(endNodeStr));
+        }
+    }
 
     @Override
     protected void onStart() {
@@ -528,6 +662,7 @@ public class MainActivity extends BaseActivity {
         super.onResume();
         //在activity执行onResume时执行mMapView. onResume ()，实现地图生命周期管理
         mTestMapView.onResume();
+        clickBaiduMapMark();
     }
 
     @Override

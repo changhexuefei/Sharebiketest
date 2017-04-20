@@ -7,13 +7,11 @@ import com.dcch.sharebiketest.moudle.login.model.IUser;
 import com.dcch.sharebiketest.moudle.login.model.UserModel;
 import com.dcch.sharebiketest.moudle.login.view.ILoginView;
 
-/**
- * Created by kaede on 2015/5/18.
- */
+
 public class LoginPresenterCompl implements ILoginPresenter {
 	ILoginView iLoginView;
 	IUser user;
-	Handler  handler;
+	Handler handler;
 
 	public LoginPresenterCompl(ILoginView iLoginView) {
 		this.iLoginView = iLoginView;
@@ -30,7 +28,8 @@ public class LoginPresenterCompl implements ILoginPresenter {
 	public void doLogin(String name, String passwd) {
 		Boolean isLoginSuccess = true;
 		final int code = user.checkUserValidity(name,passwd);
-		if (code!=0) isLoginSuccess = false;
+		if (code!=0)
+			isLoginSuccess = false;
 		final Boolean result = isLoginSuccess;
 		handler.postDelayed(new Runnable() {
 			@Override
@@ -41,13 +40,10 @@ public class LoginPresenterCompl implements ILoginPresenter {
 
 	}
 
-
-
 	@Override
 	public void setProgressBarVisiblity(int visiblity){
 		iLoginView.onSetProgressBarVisibility(visiblity);
 	}
-
 
 	private void initUser(){
 		user = new UserModel("mvp","mvp");

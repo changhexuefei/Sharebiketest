@@ -14,6 +14,11 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
 
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.FLASHLIGHT"/>
+    <uses-feature android:name="android.hardware.camera.autofocus"/>
+
     <application
         android:name=".app.MyApp"
         android:allowBackup="true"
@@ -37,15 +42,17 @@
         </service>
 
         <activity android:name=".MainActivity">
+
+        </activity>
+        <activity android:name=".ui.LoginActivity">
+        </activity>
+        <activity android:name=".ui.GuideActivity"/>
+        <activity android:name=".ui.SplashActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".ui.LoginActivity">
-        </activity>
-        <activity android:name=".ui.GuideActivity"/>
-        <activity android:name=".ui.SplashActivity"/>
         <activity android:name=".moudle.user.activity.ManualInputActivity"/>
         <activity android:name=".libzxing.zxing.activity.CaptureActivity"/>
     </application>

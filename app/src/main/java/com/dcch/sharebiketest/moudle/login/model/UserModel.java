@@ -1,12 +1,10 @@
 package com.dcch.sharebiketest.moudle.login.model;
 
-/**
- * Created by Administrator on 2017/4/17 0017.
- */
+
 
 public class UserModel implements IUser {
-    String name;
-    String passwd;
+    private String name;
+    private String passwd;
 
     public UserModel(String name, String passwd) {
         this.name = name;

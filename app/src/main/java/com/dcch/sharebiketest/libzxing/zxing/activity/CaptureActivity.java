@@ -313,12 +313,12 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
             initCrop();
         } catch (IOException ioe) {
             Log.w(TAG, ioe);
-            displayFrameworkBugMessageAndExit();
+//            displayFrameworkBugMessageAndExit();
         } catch (RuntimeException e) {
             // Barcode Scanner has seen crashes in the wild of this variety:
             // java.?lang.?RuntimeException: Fail to connect to camera service
             Log.w(TAG, "Unexpected error initializing camera", e);
-            displayFrameworkBugMessageAndExit();
+//            displayFrameworkBugMessageAndExit();
         }
     }
 
