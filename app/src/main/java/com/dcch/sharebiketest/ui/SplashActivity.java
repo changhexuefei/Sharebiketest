@@ -22,15 +22,16 @@ public class SplashActivity extends BaseActivity {
     @BindView(R.id.rl_splash_root)
     RelativeLayout mRlSplashRoot;
 
-    private final static int SWITCH_MAINACTIVITY = 1000;
+    private final static int SWITCH_LOGINACTIVITY = 1000;
     private final static int SWITCH_GUIDACTIVITY = 1001;
 
 
     private Handler handler = new Handler() {
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case SWITCH_MAINACTIVITY:
-                    switchPage();
+                case SWITCH_LOGINACTIVITY:
+                    goLogin();
+//                    switchPage();
                     break;
                 case SWITCH_GUIDACTIVITY:
                     goGuide();
@@ -39,6 +40,12 @@ public class SplashActivity extends BaseActivity {
             super.handleMessage(msg);
         }
     };
+
+    private void goLogin() {
+        Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
+        SplashActivity.this.startActivity(intent);
+        SplashActivity.this.finish();
+    }
 
     @Override
     protected int getLayoutId() {
@@ -57,7 +64,7 @@ public class SplashActivity extends BaseActivity {
         if (SPUtils.isFirst()) {
             handler.sendEmptyMessageDelayed(SWITCH_GUIDACTIVITY, 3000);
         } else {
-            handler.sendEmptyMessageDelayed(SWITCH_MAINACTIVITY, 3000);
+            handler.sendEmptyMessageDelayed(SWITCH_LOGINACTIVITY, 3000);
         }
     }
 

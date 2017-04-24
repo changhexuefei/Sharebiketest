@@ -85,38 +85,9 @@
         android:layout_marginRight="30dp"
         android:layout_marginTop="40dp"
         android:background="#c6bfbf"
-        android:enabled="false"
         android:gravity="center"
         android:text="@string/confrim"
         android:textColor="#ffffff"
         android:textSize="18sp"/>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/login_confirm"
-        android:layout_marginTop="10dp"
-        android:gravity="center">
-
-        <TextView
-            android:id="@+id/tv1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="点击-确定，即表示已阅读并同意"
-            android:textSize="12sp"/>
-
-        <TextView
-            android:id="@+id/rules"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="2dp"
-            android:enabled="true"
-            android:gravity="center"
-            android:text="《用车服务条例》"
-            android:textColor="@color/colorTitle"
-            android:textSize="12sp"/>
-    </LinearLayout>
-
 
 </RelativeLayout>
