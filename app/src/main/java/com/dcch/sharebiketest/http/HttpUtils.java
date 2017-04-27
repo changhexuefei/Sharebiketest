@@ -1,6 +1,7 @@
 package com.dcch.sharebiketest.http;
 
 import android.util.Log;
+
 import com.dcch.sharebiketest.http.response.ResponseHandler;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.StringCallback;
@@ -46,10 +47,7 @@ public class HttpUtils {
 //		String j = Md5Utils.md5(c + a + t + Api.KEY);
 		Map<String,String> param = new HashMap<>();
 		param.put("a", a);
-//		param.put("t", t);
-//		param.put("c", c);
-//		param.put("j", j);
-//		param.put("p", Base64.encodeToString(p.getBytes(), Base64.DEFAULT));
+
 		Log.d("555555",param.toString());
 		OkHttpUtils.post().url(Api.BASE_URL).params(param).tag(t).build().execute(new StringCallback() {
 			@Override
