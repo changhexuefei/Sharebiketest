@@ -6,12 +6,14 @@ import android.os.Bundle;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
@@ -29,21 +31,33 @@ import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.map.OverlayOptions;
 import com.baidu.mapapi.model.LatLng;
+import com.baidu.mapapi.search.core.SearchResult;
+import com.baidu.mapapi.search.route.BikingRouteResult;
+import com.baidu.mapapi.search.route.DrivingRouteResult;
+import com.baidu.mapapi.search.route.IndoorRouteResult;
+import com.baidu.mapapi.search.route.MassTransitRouteResult;
+import com.baidu.mapapi.search.route.OnGetRoutePlanResultListener;
 import com.baidu.mapapi.search.route.PlanNode;
 import com.baidu.mapapi.search.route.RoutePlanSearch;
+import com.baidu.mapapi.search.route.TransitRouteResult;
+import com.baidu.mapapi.search.route.WalkingRouteLine;
 import com.baidu.mapapi.search.route.WalkingRoutePlanOption;
+import com.baidu.mapapi.search.route.WalkingRouteResult;
+import com.dcch.sharebiketest.app.MyApp;
 import com.dcch.sharebiketest.base.BaseActivity;
 import com.dcch.sharebiketest.http.Api;
 import com.dcch.sharebiketest.libzxing.zxing.activity.CaptureActivity;
 import com.dcch.sharebiketest.moudle.home.BikeInfo;
 import com.dcch.sharebiketest.moudle.listener.MyOrientationListener;
 import com.dcch.sharebiketest.overlayutil.OverlayManager;
-import com.dcch.sharebiketest.ui.LoginActivity;
+import com.dcch.sharebiketest.overlayutil.WalkingRouteOverlay;
+import com.dcch.sharebiketest.utils.ClickUtils;
 import com.dcch.sharebiketest.utils.JsonUtils;
 import com.dcch.sharebiketest.utils.LogUtils;
-import com.dcch.sharebiketest.utils.SPUtils;
+import com.dcch.sharebiketest.utils.MapUtil;
 import com.dcch.sharebiketest.utils.ToastUtils;
 import com.dcch.sharebiketest.view.SelectPicPopupWindow;
+import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.StringCallback;
 
@@ -63,8 +77,9 @@ import okhttp3.Call;
 import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.RuntimePermissions;
 
+
 @RuntimePermissions
-public class MainActivity extends BaseActivity {
+public class MainActivity extends BaseActivity implements OnGetRoutePlanResultListener {
     @BindView(R.id.testMapView)
     MapView mTestMapView;
     @BindView(R.id.MyCenter)
@@ -91,22 +106,19 @@ public class MainActivity extends BaseActivity {
     private double mCurrentLantitude;//最新一次的经纬度
     private double mCurrentLongitude;
     public MyLocationListener mMyLocationListener;//定位的监听器
-    private LatLng currentLatLng;
-    private double changeLatitude, changeLongitude;
+    private double changeLatitude;
     private List<BikeInfo> bikeInfos;
     private BikeInfo bikeInfo;
-    private double mLat1;
-    private double mLng1;
     Marker mMarker = null;
-    private String result;
     private LatLng clickMarkLatlng;
     private boolean isFirst = true;
     private String bicycleNo;
-    private boolean hasPlanRoute = false;
-    private PlanNode endNodeStr, startNodeStr;
+    private PlanNode startNodeStr, endNodeStr;
     OverlayManager routeOverlay = null;//该类提供一个能够显示和管理多个Overlay的基类
     RoutePlanSearch mRPSearch = null;    // 搜索模块，也可去掉地图模块独立使用
     private SelectPicPopupWindow menuWindow = null; // 自定义弹出框
+    boolean useDefaultIcon = false;
+    private long mExitTime; //退出时间
 
     @Override
     protected int getLayoutId() {
@@ -118,10 +130,31 @@ public class MainActivity extends BaseActivity {
         MainActivityPermissionsDispatcher.initPermissionWithCheck(this);
         showCamera();
         initPermission();
+        // configure the SlidingMenu
+        SlidingMenu menu = new SlidingMenu(this);
+        menu.setMode(SlidingMenu.LEFT);
+        // 设置触摸屏幕的模式
+        menu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
+        menu.setShadowWidthRes(R.dimen.shadow_width);
+        menu.setShadowDrawable(R.drawable.shadow);
+        menu.setBehindScrollScale(0);
+
+        // 设置滑动菜单视图的宽度
+        menu.setBehindOffsetRes(R.dimen.slidingmenu_offset);
+        // 设置渐入渐出效果的值
+        menu.setFadeDegree(0.35f);
+        /**
+         * SLIDING_WINDOW will include the Title/ActionBar in the content
+         * section of the SlidingMenu, while SLIDING_CONTENT does not.
+         */
+        menu.attachToActivity(this, SlidingMenu.SLIDING_CONTENT);
+        //为侧滑菜单设置布局
+        menu.setMenu(R.layout.leftmenu);
         mMap = mTestMapView.getMap();
         mRPSearch = RoutePlanSearch.newInstance();
+        mRPSearch.setOnGetRoutePlanResultListener(this);
         LogUtils.d("地图", mMap + "");
-        bikeInfos = new ArrayList<BikeInfo>();
+        bikeInfos = new ArrayList<>();
         mAll.setChecked(true);
         // 初始化定位
         initMyLocation();
@@ -206,14 +239,25 @@ public class MainActivity extends BaseActivity {
     @OnClick({R.id.MyCenter, R.id.scan, R.id.btn_my_location})
     public void onViewClicked(View view) {
         switch (view.getId()) {
-            case R.id.MyCenter:
-                break;
+//            case R.id.MyCenter:
+//                break;
             case R.id.scan:
+                if (ClickUtils.isFastClick()) {
+                    return;
+                }
                 MainActivityPermissionsDispatcher.showCameraWithCheck(MainActivity.this);
                 Intent i1 = new Intent(MainActivity.this, CaptureActivity.class);
                 startActivityForResult(i1, 0);
                 break;
             case R.id.btn_my_location:
+                if (ClickUtils.isFastClick()) {
+                    return;
+                }
+                if (routeOverlay != null)
+                    routeOverlay.removeFromMap();
+                if (menuWindow != null) {
+                    menuWindow.dismiss();
+                }
                 setUserMapCenter(mCurrentLantitude, mCurrentLongitude);
                 break;
         }
@@ -228,14 +272,13 @@ public class MainActivity extends BaseActivity {
             switch (requestCode) {
                 case 0:
                     if (bundle != null) {
-                        result = bundle.getString("result");
-//                        openScan(uID, phone, result, mToken);
+                        String result = bundle.getString("result");
+//                        openScan(uID, result, mToken);
 //                        Intent intent = new Intent(MainActivity.this, UnlockProgressActivity.class);
 //                        startActivity(intent);
                         ToastUtils.showLong(this, result);
                     }
                     break;
-
             }
 
         }
@@ -257,21 +300,19 @@ public class MainActivity extends BaseActivity {
     }
 
     //扫码开锁的方法
-    private void openScan(final String uID, String phone, final String result, final String mToken) {
-        if (phone != null && !phone.equals("") && result != null && !result.equals("")) {
+    private void openScan(final String uID, final String result, final String mToken) {
+        if (uID != null && !uID.equals("") && result != null && !result.equals("")) {
             Map<String, String> map = new HashMap<>();
             map.clear();
             map.put("userId", uID);
-            map.put("phone", phone);
             map.put("bicycleNo", result);
             map.put("token", mToken);
-            LogUtils.d("开锁", phone);
             LogUtils.d("开锁", result);
             LogUtils.d("开锁", uID);
             OkHttpUtils.post().url(Api.BASE_URL + Api.OPENSCAN).params(map).build().execute(new StringCallback() {
                 @Override
                 public void onError(Call call, Exception e, int id) {
-                    if (!e.equals("") && e != null) {
+                    if (!e.equals("")) {
                         LogUtils.e(e.getMessage());
                     }
                     ToastUtils.showShort(MainActivity.this, "服务器忙，请稍后重试");
@@ -283,10 +324,9 @@ public class MainActivity extends BaseActivity {
                     ToastUtils.showShort(MainActivity.this, response);
                     if (JsonUtils.isSuccess(response)) {
                         LogUtils.d("开锁", "什么情况！");
-//                        EventBus.getDefault().post(new MessageEvent(), "on");
-
+                        ToastUtils.showShort(MainActivity.this, "开锁成功！");
                     } else {
-//                        EventBus.getDefault().post(new MessageEvent(), "off");
+                        ToastUtils.showShort(MainActivity.this, "开锁失败！");
                     }
                 }
             });
@@ -304,7 +344,7 @@ public class MainActivity extends BaseActivity {
     }
 
     //实现定位回调监听
-    public class MyLocationListener implements BDLocationListener {
+    private class MyLocationListener implements BDLocationListener {
         @Override
         public void onReceiveLocation(BDLocation location) {
             // map view 销毁后不在处理新接收的位置
@@ -321,7 +361,7 @@ public class MainActivity extends BaseActivity {
             mMap.setMyLocationData(locData);
             mCurrentLantitude = location.getLatitude();
             mCurrentLongitude = location.getLongitude();
-            currentLatLng = new LatLng(mCurrentLantitude, mCurrentLongitude);
+            LatLng currentLatLng = new LatLng(mCurrentLantitude, mCurrentLongitude);
             startNodeStr = PlanNode.withLocation(new LatLng(mCurrentLantitude, mCurrentLongitude));
 //            BitmapDescriptor mCurrentMarker = BitmapDescriptorFactory
 //                    .fromResource(R.mipmap.search_center_ic);
@@ -340,7 +380,7 @@ public class MainActivity extends BaseActivity {
                 builder.target(ll).zoom(18.0f);
                 mMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
                 changeLatitude = location.getLatitude();
-                changeLongitude = location.getLongitude();
+                double changeLongitude = location.getLongitude();
                 setUserMapCenter(mCurrentLantitude, mCurrentLongitude);
                 //根据手机定位地点，得到车辆信息的方法
                 getBikeInfo(mCurrentLantitude, mCurrentLongitude);
@@ -357,7 +397,7 @@ public class MainActivity extends BaseActivity {
     private void getBikeInfo(double Lantitude, double Longitude) {
         String lat = Lantitude + "";
         String lng = Longitude + "";
-        if (lat != null && !lat.equals("") && lng != null && !lng.equals("")) {
+        if (!lat.equals("") && !lng.equals("")) {
             Map<String, String> map = new HashMap<>();
             map.put("lng", lng);
             map.put("lat", lat);
@@ -405,7 +445,7 @@ public class MainActivity extends BaseActivity {
     private void getExceptionBikeInfo(double Lantitude, double Longitude) {
         String lat = Lantitude + "";
         String lng = Longitude + "";
-        if (lat != null && !lat.equals("") && lng != null && !lng.equals("")) {
+        if (!lat.equals("") && !lng.equals("")) {
             Map<String, String> map = new HashMap<>();
             map.put("lng", lng);
             map.put("lat", lat);
@@ -453,7 +493,7 @@ public class MainActivity extends BaseActivity {
     private void getTroubleBikeInfo(double Lantitude, double Longitude) {
         String lat = Lantitude + "";
         String lng = Longitude + "";
-        if (lat != null && !lat.equals("") && lng != null && !lng.equals("")) {
+        if (!lat.equals("") && !lng.equals("")) {
             Map<String, String> map = new HashMap<>();
             map.put("lng", lng);
             map.put("lat", lat);
@@ -505,15 +545,15 @@ public class MainActivity extends BaseActivity {
             mMap.clear();
             //创建marker的显示图标
             BitmapDescriptor bitmap = BitmapDescriptorFactory.fromResource(R.mipmap.bike_icon);
-            LatLng latLng = null;
+            LatLng latLng;
             List<Double> doubles = new ArrayList<>();
             for (int i = 0; i < bikeInfos.size(); i++) {
                 bikeInfo = (BikeInfo) bikeInfos.get(i);
                 String lat = bikeInfo.getLatitude();
                 String lng = bikeInfo.getLongitude();
-                mLat1 = Double.parseDouble(lat);
-                mLng1 = Double.parseDouble(lng);
-                latLng = new LatLng(mLat1, mLng1);
+                double lat1 = Double.parseDouble(lat);
+                double lng1 = Double.parseDouble(lng);
+                latLng = new LatLng(lat1, lng1);
 //                //两点之间直线距离的算法
 //                double distance1 = DistanceUtil.getDistance(latLng, currentLatLng);
 //                doubles.add(distance1);
@@ -544,22 +584,19 @@ public class MainActivity extends BaseActivity {
             @Override
             public boolean onMarkerClick(final Marker marker) {
                 if (marker.getExtraInfo() != null && marker != null) {
-//                    if (isFirst) {
-                        int zIndex = marker.getZIndex();
-                        integers.add(Integer.valueOf(zIndex));
-                        LogUtils.d("覆盖物", zIndex + "\n" + integers.size());
-//                        isFirst = false;
-                        Bundle bundle = marker.getExtraInfo();
-                        clickMarkLatlng = marker.getPosition();
-                        bikeInfo = (BikeInfo) bundle.getSerializable("bikeInfo");
-                        if (bikeInfo != null) {
-                            bicycleNo = bikeInfo.getBicycleNo() + "";
-                            if (menuWindow == null || !menuWindow.isShowing()) {
-                                showMenuWindow(bikeInfo);
-                            }
-                            updateBikeInfo(bikeInfo);
+                    int zIndex = marker.getZIndex();
+                    integers.add(Integer.valueOf(zIndex));
+                    LogUtils.d("覆盖物", zIndex + "\n" + integers.size());
+                    Bundle bundle = marker.getExtraInfo();
+                    clickMarkLatlng = marker.getPosition();
+                    bikeInfo = (BikeInfo) bundle.getSerializable("bikeInfo");
+                    if (bikeInfo != null) {
+                        bicycleNo = bikeInfo.getBicycleNo() + "";
+                        if (menuWindow == null || !menuWindow.isShowing()) {
+                            showMenuWindow(bikeInfo);
                         }
-//                    }
+                        updateBikeInfo(bikeInfo);
+                    }
                 }
                 mMap.clear();
                 addOverlay(bikeInfos);//
@@ -571,6 +608,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void updateBikeInfo(BikeInfo bikeInfo) {
+        boolean hasPlanRoute = false;
         if (!hasPlanRoute) {
             this.bikeInfo = bikeInfo;
             Double doulat = Double.valueOf(bikeInfo.getLatitude());
@@ -582,50 +620,12 @@ public class MainActivity extends BaseActivity {
 
     private void showMenuWindow(BikeInfo bikeInfo) {
         if (menuWindow == null) {
-            menuWindow = new SelectPicPopupWindow(MainActivity.this, bikeInfo, itemsOnClick);
+            menuWindow = new SelectPicPopupWindow(MainActivity.this, bikeInfo);
         }
         menuWindow.setFocusable(false);
         menuWindow.setOutsideTouchable(false);
         menuWindow.showAsDropDown(findViewById(R.id.top));
-//        if (SPUtils.isLogin()) {
-//            if (cashStatus == 1 && status == 1) {
-//                menuWindow.mOrder.setText("预约用车");
-//            } else if (cashStatus == 0 && status == 0) {
-//                menuWindow.mOrder.setText("完成注册即可骑单车");
-//            } else if (cashStatus == 1 && status == 0) {
-//                menuWindow.mOrder.setText("完成注册即可骑单车");
-//            } else if (cashStatus == 0 && status == 1) {
-//                menuWindow.mOrder.setText("预约用车");
-//            }
-//        } else {
-//            menuWindow.mOrder.setText("立即登录即可骑单车");
-//        }
     }
-
-    //预约车辆的点击监听事件
-    View.OnClickListener itemsOnClick = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            switch (v.getId()) {
-                case R.id.order:
-                    if (SPUtils.isLogin()) {
-                        if (menuWindow != null && menuWindow.isShowing()) {
-                            menuWindow.dismiss();
-                        }
-                        mMap.clear();
-                        addOverlay(bikeInfos);
-                    } else {
-//                        mInstructions.setVisibility(View.VISIBLE);
-                        startActivity(new Intent(MainActivity.this, LoginActivity.class));
-                        menuWindow.setFocusable(true);
-                        menuWindow.dismiss();
-                        mMap.clear();
-                        addOverlay(bikeInfos);
-                        setUserMapCenter(mCurrentLantitude, mCurrentLongitude);
-                    }
-            }
-        }
-    };
 
     private void drawPlanRoute(PlanNode endNodeStr) {
         if (routeOverlay != null)
@@ -633,6 +633,8 @@ public class MainActivity extends BaseActivity {
         if (endNodeStr != null) {
             Log.d("gao", "changeLatitude-----startNode--------" + startNodeStr.getLocation().latitude);
             Log.d("gao", "changeLongitude-----startNode--------" + startNodeStr.getLocation().longitude);
+            Log.d("gao", "changeLatitude-----startNode--------" + endNodeStr.getLocation().latitude);
+            Log.d("gao", "changeLongitude-----startNode--------" + endNodeStr.getLocation().longitude);
             mRPSearch.walkingSearch((new WalkingRoutePlanOption()).from(startNodeStr).to(endNodeStr));
         }
     }
@@ -671,4 +673,128 @@ public class MainActivity extends BaseActivity {
         //在activity执行onPause时执行mMapView. onPause ()，实现地图生命周期管理
         mTestMapView.onPause();
     }
+
+    @Override
+    public void onGetWalkingRouteResult(WalkingRouteResult walkingRouteResult) {
+        if (walkingRouteResult == null || walkingRouteResult.error != SearchResult.ERRORNO.NO_ERROR) {
+            Toast.makeText(MainActivity.this, "抱歉，未找到结果", Toast.LENGTH_SHORT).show();
+        }
+        if (walkingRouteResult.error == SearchResult.ERRORNO.AMBIGUOUS_ROURE_ADDR) {
+            //起终点或途经点地址有岐义，通过以下接口获取建议查询信息
+//                    result.getSuggestAddrInfo();
+            return;
+        }
+
+        if (walkingRouteResult.error == SearchResult.ERRORNO.NO_ERROR) {
+            WalkingRouteLine walkingRouteLine = walkingRouteResult.getRouteLines().get(0);
+            int distance = walkingRouteLine.getDistance();
+            int walkTime = walkingRouteLine.getDuration() / 60;
+            LogUtils.d("gao", distance + "\n" + walkTime + "\n" + walkingRouteLine);
+//            mWalkTime = distance / 60;
+            String distance1 = MapUtil.distanceFormatter(distance);
+            String castTime = String.valueOf(walkTime);
+            if (!distance1.equals("")) {
+                menuWindow.mDistance.setText(distance1);
+            }
+            if (!castTime.equals("")) {
+                menuWindow.mArrivalTime.setText(castTime + "分钟");
+            }
+
+        }
+        WalkingRouteOverlay overlay = new MyWalkingRouteOverlay(mMap);
+//        /**
+//         * 设置地图 Marker 覆盖物点击事件监听者
+//         * 需要实现的方法：     onMarkerClick(Marker marker)
+//         * */
+        mMap.setOnMarkerClickListener(overlay);
+        routeOverlay = overlay;
+
+        if (!overlay.equals("")) {
+//            /**
+//             * public void setData(WalkingRouteLine line)设置路线数据。
+//             * 参数:line - 路线数据
+//             * */
+            overlay.setData(walkingRouteResult.getRouteLines().get(0));
+//            /**
+//             * public final void addToMap()将所有Overlay 添加到地图上
+//             * */
+            overlay.addToMap();
+//            /**
+//             * public void zoomToSpan()
+//             * 缩放地图，使所有Overlay都在合适的视野内
+//             * 注： 该方法只对Marker类型的overlay有效
+//             * */
+            overlay.zoomToSpan();
+        }
+    }
+
+    @Override
+    public void onGetTransitRouteResult(TransitRouteResult transitRouteResult) {
+
+    }
+
+    @Override
+    public void onGetMassTransitRouteResult(MassTransitRouteResult massTransitRouteResult) {
+
+    }
+
+    @Override
+    public void onGetDrivingRouteResult(DrivingRouteResult drivingRouteResult) {
+
+    }
+
+    @Override
+    public void onGetIndoorRouteResult(IndoorRouteResult indoorRouteResult) {
+
+    }
+
+    @Override
+    public void onGetBikingRouteResult(BikingRouteResult bikingRouteResult) {
+
+    }
+
+    //WalkingRouteOverlay已经实现了BaiduMap.OnMarkerClickListener接口
+    private class MyWalkingRouteOverlay extends WalkingRouteOverlay {
+        MyWalkingRouteOverlay(BaiduMap baiduMap) {
+            super(baiduMap);
+        }
+
+        //返回:起点图标
+        @Override
+        public BitmapDescriptor getStartMarker() {
+            if (useDefaultIcon) {
+                return BitmapDescriptorFactory.fromResource(R.drawable.unchecked);
+            }
+            return null;
+        }
+
+        //返回:终点图标
+        @Override
+        public BitmapDescriptor getTerminalMarker() {
+            if (useDefaultIcon) {
+                return BitmapDescriptorFactory.fromResource(R.drawable.unchecked);
+            }
+            return null;
+        }
+    }
+
+    //点击手机上的返回键退出App的方法
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+
+        //按下的如果是BACK键，同时没有重复
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+            if ((System.currentTimeMillis() - mExitTime) > 2000) {
+                Toast.makeText(this, "再按一次退出程序", Toast.LENGTH_SHORT).show();
+                mExitTime = System.currentTimeMillis();
+            } else {
+                MyApp.getInstance().exit();
+                finish();
+            }
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+
 }

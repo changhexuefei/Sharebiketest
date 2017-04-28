@@ -1,5 +1,4 @@
 <resources>
-
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
@@ -7,6 +6,7 @@
         <item name="colorPrimaryDark">@color/colorHeading</item>
         <item name="colorAccent">@color/colorHeading</item>
     </style>
+
     <style name="home_selector">
         <item name="android:background">@drawable/selector_radio_button</item>
         <item name="android:button">@null</item>

@@ -107,14 +107,14 @@
 
         </LinearLayout>
 
-        <Button
-            android:layout_margin="10dp"
-            android:id="@+id/order"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/colorTitle"
-            android:text="预约用车"
-            android:textColor="#ffffff"/>
+        <!--<Button-->
+            <!--android:layout_margin="10dp"-->
+            <!--android:id="@+id/order"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:background="@color/colorTitle"-->
+            <!--android:text="预约用车"-->
+            <!--android:textColor="#ffffff"/>-->
 
     </LinearLayout>
 

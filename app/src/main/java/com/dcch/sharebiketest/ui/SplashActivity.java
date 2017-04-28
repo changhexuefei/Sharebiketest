@@ -11,6 +11,7 @@ import com.dcch.sharebiketest.MainActivity;
 import com.dcch.sharebiketest.R;
 import com.dcch.sharebiketest.app.MyApp;
 import com.dcch.sharebiketest.base.BaseActivity;
+import com.dcch.sharebiketest.moudle.login.activity.LoginActivity;
 import com.dcch.sharebiketest.utils.LogUtils;
 import com.dcch.sharebiketest.utils.SPUtils;
 
@@ -30,8 +31,8 @@ public class SplashActivity extends BaseActivity {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case SWITCH_LOGINACTIVITY:
-                    goLogin();
-//                    switchPage();
+//                    goLogin();
+                    switchPage();
                     break;
                 case SWITCH_GUIDACTIVITY:
                     goGuide();
@@ -79,7 +80,7 @@ public class SplashActivity extends BaseActivity {
         } else {
             LogUtils.e("没有登录...");
             if (isStartGuide) {
-                startActivity(new Intent(MyApp.getContext(), MainActivity.class));
+                startActivity(new Intent(MyApp.getContext(), LoginActivity.class));
                 finish();
             } else {
                 startActivity(new Intent(MyApp.getContext(), GuideActivity.class));
