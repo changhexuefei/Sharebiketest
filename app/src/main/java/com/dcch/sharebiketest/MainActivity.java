@@ -143,10 +143,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         menu.setBehindOffsetRes(R.dimen.slidingmenu_offset);
         // 设置渐入渐出效果的值
         menu.setFadeDegree(0.35f);
-        /**
-         * SLIDING_WINDOW will include the Title/ActionBar in the content
-         * section of the SlidingMenu, while SLIDING_CONTENT does not.
-         */
         menu.attachToActivity(this, SlidingMenu.SLIDING_CONTENT);
         //为侧滑菜单设置布局
         menu.setMenu(R.layout.leftmenu);
@@ -239,8 +235,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     @OnClick({R.id.MyCenter, R.id.scan, R.id.btn_my_location})
     public void onViewClicked(View view) {
         switch (view.getId()) {
-//            case R.id.MyCenter:
-//                break;
             case R.id.scan:
                 if (ClickUtils.isFastClick()) {
                     return;
@@ -274,8 +268,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                     if (bundle != null) {
                         String result = bundle.getString("result");
 //                        openScan(uID, result, mToken);
-//                        Intent intent = new Intent(MainActivity.this, UnlockProgressActivity.class);
-//                        startActivity(intent);
                         ToastUtils.showLong(this, result);
                     }
                     break;
