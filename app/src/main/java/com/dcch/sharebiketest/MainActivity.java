@@ -58,7 +58,6 @@ import com.dcch.sharebiketest.moudle.login.activity.LoginActivity;
 import com.dcch.sharebiketest.overlayutil.OverlayManager;
 import com.dcch.sharebiketest.overlayutil.WalkingRouteOverlay;
 import com.dcch.sharebiketest.utils.ClickUtils;
-import com.dcch.sharebiketest.utils.JsonUtils;
 import com.dcch.sharebiketest.utils.LogUtils;
 import com.dcch.sharebiketest.utils.MapUtil;
 import com.dcch.sharebiketest.utils.SPUtils;
@@ -121,8 +120,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     private BikeInfo bikeInfo;
     Marker mMarker = null;
     private LatLng clickMarkLatlng;
-    private boolean isFirst = true;
-    private String bicycleNo;
     private PlanNode startNodeStr, endNodeStr;
     OverlayManager routeOverlay = null;//该类提供一个能够显示和管理多个Overlay的基类
     RoutePlanSearch mRPSearch = null;    // 搜索模块，也可去掉地图模块独立使用
@@ -165,7 +162,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 
-                switch (item.getItemId()){
+                switch (item.getItemId()) {
                     case R.id.credit:
 
                         break;
@@ -295,10 +292,16 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 if (ClickUtils.isFastClick()) {
                     return;
                 }
-                if (routeOverlay != null)
-                    routeOverlay.removeFromMap();
                 if (menuWindow != null) {
                     menuWindow.dismiss();
+                }
+                mMap.clear();
+                if (mAll.isChecked()) {
+                    getBikeInfo(mCurrentLantitude, mCurrentLongitude);
+                } else if (mTrouble.isChecked()) {
+                    getTroubleBikeInfo(mCurrentLantitude, mCurrentLongitude);
+                } else if (mException.isChecked()) {
+                    getExceptionBikeInfo(mCurrentLantitude, mCurrentLongitude);
                 }
                 setUserMapCenter(mCurrentLantitude, mCurrentLongitude);
                 break;
@@ -326,13 +329,48 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 case 0:
                     if (bundle != null) {
                         String result = bundle.getString("result");
-                        openScan(mUID, result, mToken);
+                        CheckRepairBicycleNo(result);
+
                         ToastUtils.showLong(this, result);
                     }
                     break;
             }
 
         }
+    }
+
+    private void CheckRepairBicycleNo(final String result) {
+        Map<String, String> map = new HashMap<>();
+        map.put("lockremark", result);
+        OkHttpUtils.post().url(Api.BASE_URL + Api.CHECKREPAIRBICYCLENO).params(map).build().execute(new StringCallback() {
+            @Override
+            public void onError(Call call, Exception e, int id) {
+                LogUtils.e("错误", e.getMessage());
+                ToastUtils.showShort(MainActivity.this, "服务器正忙，请稍后再试！");
+            }
+
+            @Override
+            public void onResponse(String response, int id) {
+                LogUtils.d("检查", response);
+                try {
+                    JSONObject object = new JSONObject(response);
+                    String resultStatus = object.optString("resultStatus");
+                    if (resultStatus.equals("0")) {
+                        ToastUtils.showLong(MyApp.getContext(), "车辆编号有误");
+
+                    } else if (resultStatus.equals("1")) {
+                        openScan(mUID, result, mToken);
+                    } else if (resultStatus.equals("3")) {
+                        ToastUtils.showLong(MyApp.getContext(), "我正在被使用！");
+
+                    } else if (resultStatus.equals("5")) {
+                        ToastUtils.showLong(MyApp.getContext(), "我是预约车！");
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     @Override
@@ -358,9 +396,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             map.put("userId", uID);
             map.put("bicycleNo", result);
             map.put("token", mToken);
-            LogUtils.d("开锁", result);
-            LogUtils.d("开锁", uID);
-            LogUtils.d("开锁", mToken);
+            LogUtils.d("开锁", result + "\n" + uID + "\n" + mToken);
             OkHttpUtils.post().url(Api.BASE_URL + Api.OPENSCAN).params(map).build().execute(new StringCallback() {
                 @Override
                 public void onError(Call call, Exception e, int id) {
@@ -373,18 +409,26 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 @Override
                 public void onResponse(String response, int id) {
                     Log.d("开锁", response);
-                    ToastUtils.showShort(MainActivity.this, response);
-                    if (JsonUtils.isSuccess(response)) {
-                        LogUtils.d("开锁", "什么情况！");
-                        ToastUtils.showShort(MainActivity.this, "开锁成功！");
-                    } else {
-                        ToastUtils.showShort(MainActivity.this, "开锁失败！");
+                    try {
+                        JSONObject object = new JSONObject(response);
+                        String resultStatus = object.optString("resultStatus");
+                        if (resultStatus.equals("0")) {
+                            ToastUtils.showLong(MyApp.getContext(), "开锁失败！");
+
+                        } else if (resultStatus.equals("1")) {
+                            ToastUtils.showLong(MyApp.getContext(), "开锁成功！");
+                        } else if (resultStatus.equals("2")) {
+                            ToastUtils.showLong(MyApp.getContext(), "您的账号在其他设备上登录，您已被迫下线");
+                            startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                            MainActivity.this.finish();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
                 }
             });
         }
     }
-
 
     //设置中心点
     private void setUserMapCenter(Double Lantitude, Double Longitude) {
@@ -394,7 +438,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         builder.target(ll).zoom(18.0f);
         mMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
     }
-
 
     //实现定位回调监听
     private class MyLocationListener implements BDLocationListener {
@@ -590,7 +633,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         }
     }
 
-
     //百度地图添加覆盖物的方法
     private void addOverlay(List bikeInfos) {
         if (bikeInfos.size() > 0) {
@@ -644,7 +686,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                     clickMarkLatlng = marker.getPosition();
                     bikeInfo = (BikeInfo) bundle.getSerializable("bikeInfo");
                     if (bikeInfo != null) {
-                        bicycleNo = bikeInfo.getBicycleNo() + "";
                         if (menuWindow == null || !menuWindow.isShowing()) {
                             showMenuWindow(bikeInfo);
                         }

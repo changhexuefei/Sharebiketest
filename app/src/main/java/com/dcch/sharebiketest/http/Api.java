@@ -20,5 +20,7 @@ public class Api {
     public static final String CHECKBICYCLENO = "checkBicycleNo.do?";
     //登录
     public static final String REPAIRLOGIN = "repairLogin.do?";
+    //检查车锁是否存在，是否开锁，是否预约
+    public static final String CHECKREPAIRBICYCLENO = "CheckRepairBicycleNo.do?";
 
 }

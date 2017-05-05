@@ -39,7 +39,6 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.dcch.sharebiketest.R;
-import com.dcch.sharebiketest.http.Api;
 import com.dcch.sharebiketest.libzxing.zxing.camera.CameraManager;
 import com.dcch.sharebiketest.libzxing.zxing.decode.DecodeThread;
 import com.dcch.sharebiketest.libzxing.zxing.utils.BeepManager;
@@ -47,24 +46,15 @@ import com.dcch.sharebiketest.libzxing.zxing.utils.CaptureActivityHandler;
 import com.dcch.sharebiketest.libzxing.zxing.utils.InactivityTimer;
 import com.dcch.sharebiketest.moudle.user.activity.ManualInputActivity;
 import com.dcch.sharebiketest.utils.DensityUtils;
-import com.dcch.sharebiketest.utils.JsonUtils;
-import com.dcch.sharebiketest.utils.LogUtils;
 import com.dcch.sharebiketest.utils.ToastUtils;
 import com.google.zxing.Result;
-import com.zhy.http.okhttp.OkHttpUtils;
-import com.zhy.http.okhttp.callback.StringCallback;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import okhttp3.Call;
-
-
 
 
 /**
@@ -266,32 +256,13 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         inactivityTimer.onActivity();
         beepManager.playBeepSoundAndVibrate();
         final String rawResultText = rawResult.getText();
-        Map<String, String> map = new HashMap<>();
-        map.put("lockremark", rawResultText);
-        OkHttpUtils.post().url(Api.BASE_URL + Api.CHECKBICYCLENO).params(map).build().execute(new StringCallback() {
-            @Override
-            public void onError(Call call, Exception e, int id) {
-                ToastUtils.showShort(CaptureActivity.this, "来自Capture：服务器正忙，请稍后再试！");
-            }
-
-            @Override
-            public void onResponse(String response, int id) {
-                LogUtils.d("锁号", response);
-                //{"resultStatus":"0"}
-                if (JsonUtils.isSuccess(response)) {
-                    Intent resultIntent = new Intent();
-                    bundle.putInt("width", mCropRect.width());
-                    bundle.putInt("height", mCropRect.height());
-                    bundle.putString("result", rawResultText);
-                    resultIntent.putExtras(bundle);
-                    CaptureActivity.this.setResult(RESULT_OK, resultIntent);
-                    CaptureActivity.this.finish();
-
-                } else {
-                    ToastUtils.showShort(CaptureActivity.this, "二维码格式有误");
-                }
-            }
-        });
+        Intent resultIntent = new Intent();
+        bundle.putInt("width", mCropRect.width());
+        bundle.putInt("height", mCropRect.height());
+        bundle.putString("result", rawResultText);
+        resultIntent.putExtras(bundle);
+        CaptureActivity.this.setResult(RESULT_OK, resultIntent);
+        CaptureActivity.this.finish();
     }
 
     private void initCamera(SurfaceHolder surfaceHolder) {
