@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group
+        android:checkableBehavior="single">
+
+
+        <item
+            android:id="@+id/credit"
+            android:checkable="true"
+            android:icon="@mipmap/user_center_credit"
+            android:title="信用"/>
+
+        <item
+            android:id="@+id/tickling"
+            android:icon="@mipmap/user_center_feedback"
+            android:title="反馈"/>
+        <item
+            android:id="@+id/friend"
+            android:icon="@mipmap/user_center_invite"
+            android:title="好友"/>
+        <item
+            android:id="@+id/record"
+            android:icon="@mipmap/user_center_order"
+            android:title="记录"/>
+        <item
+            android:id="@+id/exit"
+            android:icon="@mipmap/user_center_setting"
+            android:title="退出"/>
+    </group>
+
+</menu>

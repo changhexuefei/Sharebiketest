@@ -313,12 +313,12 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
             initCrop();
         } catch (IOException ioe) {
             Log.w(TAG, ioe);
-//            displayFrameworkBugMessageAndExit();
+            displayFrameworkBugMessageAndExit();
         } catch (RuntimeException e) {
             // Barcode Scanner has seen crashes in the wild of this variety:
             // java.?lang.?RuntimeException: Fail to connect to camera service
             Log.w(TAG, "Unexpected error initializing camera", e);
-//            displayFrameworkBugMessageAndExit();
+            displayFrameworkBugMessageAndExit();
         }
     }
 
@@ -326,8 +326,8 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         // camera error
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(getString(R.string.app_name));
-        builder.setMessage("Camera error");
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        builder.setMessage("请允许打开摄像头");
+        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {

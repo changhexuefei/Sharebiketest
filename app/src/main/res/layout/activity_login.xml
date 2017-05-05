@@ -15,8 +15,8 @@
         android:layout_height="40dp"
         android:layout_below="@+id/toolbar"
         android:layout_centerHorizontal="true"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
         android:layout_marginTop="10dp"
         android:background="#dad5d5"
         android:orientation="horizontal">
@@ -50,7 +50,7 @@
         android:layout_height="40dp"
         android:layout_alignLeft="@+id/userNameArea"
         android:layout_below="@+id/userNameArea"
-        android:layout_marginRight="30dp"
+        android:layout_marginRight="15dp"
         android:layout_marginTop="10dp"
         android:background="#dad5d5">
 
@@ -81,10 +81,10 @@
         android:layout_height="40dp"
         android:layout_below="@+id/passwordArea"
         android:layout_centerHorizontal="true"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
         android:layout_marginTop="40dp"
-        android:background="#c6bfbf"
+        android:background="@color/colorTitle"
         android:gravity="center"
         android:text="@string/confrim"
         android:textColor="#ffffff"

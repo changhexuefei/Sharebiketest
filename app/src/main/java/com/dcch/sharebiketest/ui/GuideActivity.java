@@ -11,10 +11,10 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import com.dcch.sharebiketest.MainActivity;
 import com.dcch.sharebiketest.R;
 import com.dcch.sharebiketest.app.MyApp;
 import com.dcch.sharebiketest.base.BaseActivity;
+import com.dcch.sharebiketest.moudle.login.activity.LoginActivity;
 import com.dcch.sharebiketest.utils.LogUtils;
 import com.dcch.sharebiketest.utils.SPUtils;
 
@@ -48,8 +48,8 @@ public class GuideActivity extends BaseActivity {
         //设置全屏显示
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        int[] ids = {R.drawable.timg, R.drawable.yellow, R.drawable.timg,
-                R.drawable.yellow};
+        int[] ids = {R.drawable.qilinone, R.drawable.qilintwo, R.drawable.qilinthere,
+                R.drawable.qilinfour};
         imageViews = new ArrayList();
         for (int i = 0; i < ids.length; i++) {
             ImageView imageView = new ImageView(this);
@@ -77,7 +77,7 @@ public class GuideActivity extends BaseActivity {
         btn_start_main.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MyApp.getContext(), MainActivity.class);
+                Intent intent = new Intent(MyApp.getContext(), LoginActivity.class);
                 startActivity(intent);
                 SPUtils.put(MyApp.getContext(), "isStartGuide", true);
                 SPUtils.put(MyApp.getContext(), "isfirst", false);

@@ -42,11 +42,7 @@ public class SplashActivity extends BaseActivity {
         }
     };
 
-    private void goLogin() {
-        Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
-        SplashActivity.this.startActivity(intent);
-        SplashActivity.this.finish();
-    }
+
 
     @Override
     protected int getLayoutId() {
@@ -80,8 +76,7 @@ public class SplashActivity extends BaseActivity {
         } else {
             LogUtils.e("没有登录...");
             if (isStartGuide) {
-                startActivity(new Intent(MyApp.getContext(), LoginActivity.class));
-                finish();
+                goLogin();
             } else {
                 startActivity(new Intent(MyApp.getContext(), GuideActivity.class));
                 finish();
@@ -101,6 +96,18 @@ public class SplashActivity extends BaseActivity {
 
     private void goGuide() {
         Intent intent = new Intent(SplashActivity.this, GuideActivity.class);
+        SplashActivity.this.startActivity(intent);
+        SplashActivity.this.finish();
+    }
+
+    private void goLogin() {
+        Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
+        SplashActivity.this.startActivity(intent);
+        SplashActivity.this.finish();
+    }
+
+    private void goMain() {
+        Intent intent = new Intent(SplashActivity.this, MainActivity.class);
         SplashActivity.this.startActivity(intent);
         SplashActivity.this.finish();
     }

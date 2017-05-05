@@ -66,7 +66,7 @@ public class LoginActivity extends BaseActivity {
 
     @OnClick(R.id.login_confirm)
     public void onViewClicked() {
-        if(ClickUtils.isFastClick()){
+        if (ClickUtils.isFastClick()) {
             return;
         }
         String userName = mUserName.getText().toString();
@@ -75,32 +75,30 @@ public class LoginActivity extends BaseActivity {
             Toast.makeText(getApplicationContext(), "账号或密码不能为空", Toast.LENGTH_SHORT).show();
             return;
         }
-        login(userName,pwd);
-
-
+        login(userName, pwd);
     }
 
     private void login(String userName, String pwd) {
-        Map<String,String> map = new HashMap<>();
-        map.put("username",userName);
-        map.put("password",pwd);
-        OkHttpUtils.post().url(Api.BASE_URL+Api.REPAIRLOGIN).params(map).build().execute(new StringCallback() {
+        Map<String, String> map = new HashMap<>();
+        map.put("username", userName);
+        map.put("password", pwd);
+        OkHttpUtils.post().url(Api.BASE_URL + Api.REPAIRLOGIN).params(map).build().execute(new StringCallback() {
             @Override
             public void onError(Call call, Exception e, int id) {
-                ToastUtils.showShort(LoginActivity.this,"服务器正忙，请稍后再试");
+                ToastUtils.showShort(LoginActivity.this, "服务器正忙，请稍后再试");
             }
 
             @Override
             public void onResponse(String response, int id) {
-                LogUtils.d("登录结果",response);
-                if(JsonUtils.isSuccess(response)){
-                    ToastUtils.showShort(LoginActivity.this,"登录成功");
-                    SPUtils.put(MyApp.getContext(),"islogin",true);
-                    SPUtils.put(MyApp.getContext(),"userDetail",response);
+                LogUtils.d("登录结果", response);
+                if (JsonUtils.isSuccess(response)) {
+                    ToastUtils.showShort(LoginActivity.this, "登录成功");
+                    SPUtils.put(MyApp.getContext(), "islogin", true);
+                    SPUtils.put(MyApp.getContext(), "userDetail", response);
                     startActivity(new Intent(LoginActivity.this, MainActivity.class));
                     LoginActivity.this.finish();
-                }else{
-                    ToastUtils.showShort(LoginActivity.this,"用户名或者密码错误！");
+                } else {
+                    ToastUtils.showShort(LoginActivity.this, "用户名或者密码错误！");
 
                 }
 

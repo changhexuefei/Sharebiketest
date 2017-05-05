@@ -1,12 +1,17 @@
 package com.dcch.sharebiketest;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -49,15 +54,16 @@ import com.dcch.sharebiketest.http.Api;
 import com.dcch.sharebiketest.libzxing.zxing.activity.CaptureActivity;
 import com.dcch.sharebiketest.moudle.home.BikeInfo;
 import com.dcch.sharebiketest.moudle.listener.MyOrientationListener;
+import com.dcch.sharebiketest.moudle.login.activity.LoginActivity;
 import com.dcch.sharebiketest.overlayutil.OverlayManager;
 import com.dcch.sharebiketest.overlayutil.WalkingRouteOverlay;
 import com.dcch.sharebiketest.utils.ClickUtils;
 import com.dcch.sharebiketest.utils.JsonUtils;
 import com.dcch.sharebiketest.utils.LogUtils;
 import com.dcch.sharebiketest.utils.MapUtil;
+import com.dcch.sharebiketest.utils.SPUtils;
 import com.dcch.sharebiketest.utils.ToastUtils;
 import com.dcch.sharebiketest.view.SelectPicPopupWindow;
-import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.StringCallback;
 
@@ -82,8 +88,8 @@ import permissions.dispatcher.RuntimePermissions;
 public class MainActivity extends BaseActivity implements OnGetRoutePlanResultListener {
     @BindView(R.id.testMapView)
     MapView mTestMapView;
-    @BindView(R.id.MyCenter)
-    ImageView mMyCenter;
+    @BindView(R.id.userCenter)
+    ImageView mUserCenter;
     @BindView(R.id.scan)
     TextView mScan;
     @BindView(R.id.btn_my_location)
@@ -96,6 +102,10 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     RadioButton mTrouble;
     @BindView(R.id.subclauses)
     RadioGroup mSubclauses;
+    @BindView(R.id.nav)
+    NavigationView mNav;
+    @BindView(R.id.activity_na)
+    DrawerLayout mActivityNa;
     private BaiduMap mMap;
     private LocationClient mLocationClient;//定位的客户端
     private float mCurrentAccracy;//当前的精度
@@ -119,6 +129,11 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     private SelectPicPopupWindow menuWindow = null; // 自定义弹出框
     boolean useDefaultIcon = false;
     private long mExitTime; //退出时间
+    private String mToken;
+    private String mUID;
+    private ImageView mUserIcon;
+    private TextView mUserName;
+
 
     @Override
     protected int getLayoutId() {
@@ -130,23 +145,12 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         MainActivityPermissionsDispatcher.initPermissionWithCheck(this);
         showCamera();
         initPermission();
-        // configure the SlidingMenu
-        SlidingMenu menu = new SlidingMenu(this);
-        menu.setMode(SlidingMenu.LEFT);
-        // 设置触摸屏幕的模式
-        menu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
-        menu.setShadowWidthRes(R.dimen.shadow_width);
-        menu.setShadowDrawable(R.drawable.shadow);
-        menu.setBehindScrollScale(0);
-
-        // 设置滑动菜单视图的宽度
-        menu.setBehindOffsetRes(R.dimen.slidingmenu_offset);
-        // 设置渐入渐出效果的值
-        menu.setFadeDegree(0.35f);
-        menu.attachToActivity(this, SlidingMenu.SLIDING_CONTENT);
-        //为侧滑菜单设置布局
-        menu.setMenu(R.layout.leftmenu);
         mMap = mTestMapView.getMap();
+        View headerView = mNav.getHeaderView(0);//获取头布局
+        //获得头像
+        mUserIcon = (ImageView) headerView.findViewById(R.id.userIcon);
+        //获得用户名
+        mUserName = (TextView) headerView.findViewById(R.id.userName);
         mRPSearch = RoutePlanSearch.newInstance();
         mRPSearch.setOnGetRoutePlanResultListener(this);
         LogUtils.d("地图", mMap + "");
@@ -155,7 +159,51 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         // 初始化定位
         initMyLocation();
         // 初始化传感器
-        initOritationListener();
+        initOritationListener();//.LOCK_MODE_LOCKED_CLOSED
+        mActivityNa.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNDEFINED);//关闭手势滑动，只通过点击按钮来滑动
+        mNav.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+
+                switch (item.getItemId()){
+                    case R.id.credit:
+
+                        break;
+                    case R.id.tickling:
+
+                        break;
+                    case R.id.friend:
+
+                        break;
+                    case R.id.record:
+
+                        break;
+                    case R.id.exit:
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("退出登录")
+                                .setMessage("确定退出登录吗？")
+                                .setNegativeButton("取消", null)
+                                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        ToastUtils.showShort(MainActivity.this, "" + which);
+                                        Intent i1 = new Intent(MainActivity.this, LoginActivity.class);
+                                        startActivity(i1);
+                                        SPUtils.clear(MyApp.getContext());
+                                        SPUtils.put(MyApp.getContext(), "islogin", false);
+                                        SPUtils.put(MyApp.getContext(), "isfirst", false);
+                                        SPUtils.put(MyApp.getContext(), "isStartGuide", true);
+                                        finish();
+                                    }
+                                }).create()
+                                .show();
+                        break;
+                }
+                item.setChecked(true);
+                mActivityNa.closeDrawer(mNav);
+                return true;
+            }
+        });
     }
 
     @Override
@@ -232,7 +280,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         mLocationClient.setLocOption(option);
     }
 
-    @OnClick({R.id.MyCenter, R.id.scan, R.id.btn_my_location})
+    @OnClick({R.id.userCenter, R.id.scan, R.id.btn_my_location})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.scan:
@@ -254,6 +302,17 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 }
                 setUserMapCenter(mCurrentLantitude, mCurrentLongitude);
                 break;
+
+            case R.id.userCenter:
+                if (ClickUtils.isFastClick()) {
+                    return;
+                }
+                if (mActivityNa.isDrawerOpen(mNav)) {
+                    mActivityNa.closeDrawer(mNav);
+                } else {
+                    mActivityNa.openDrawer(mNav);
+                }
+                break;
         }
     }
 
@@ -267,7 +326,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 case 0:
                     if (bundle != null) {
                         String result = bundle.getString("result");
-//                        openScan(uID, result, mToken);
+                        openScan(mUID, result, mToken);
                         ToastUtils.showLong(this, result);
                     }
                     break;
@@ -301,6 +360,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             map.put("token", mToken);
             LogUtils.d("开锁", result);
             LogUtils.d("开锁", uID);
+            LogUtils.d("开锁", mToken);
             OkHttpUtils.post().url(Api.BASE_URL + Api.OPENSCAN).params(map).build().execute(new StringCallback() {
                 @Override
                 public void onError(Call call, Exception e, int id) {
@@ -334,6 +394,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         builder.target(ll).zoom(18.0f);
         mMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
     }
+
 
     //实现定位回调监听
     private class MyLocationListener implements BDLocationListener {
@@ -656,8 +717,23 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         super.onResume();
         //在activity执行onResume时执行mMapView. onResume ()，实现地图生命周期管理
         mTestMapView.onResume();
+        if (SPUtils.isLogin()) {
+            String userDetail = (String) SPUtils.get(MyApp.getContext(), "userDetail", "");
+            JSONObject object;
+            try {
+                object = new JSONObject(userDetail);
+                int id = object.optInt("id");
+                mToken = object.optString("token");
+                mUID = String.valueOf(id);
+                Log.d("实验", "onResume");
+                LogUtils.d("实验", mToken + "\n" + mUID);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
         clickBaiduMapMark();
     }
+
 
     @Override
     protected void onPause() {
