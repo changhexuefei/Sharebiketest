@@ -27,6 +27,7 @@ import com.baidu.location.LocationClientOption;
 import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
+import com.baidu.mapapi.map.MapPoi;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
@@ -292,16 +293,17 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 if (ClickUtils.isFastClick()) {
                     return;
                 }
-                if (menuWindow != null) {
+                if (menuWindow != null && menuWindow.isShowing() && routeOverlay != null) {
+                    routeOverlay.removeFromMap();
                     menuWindow.dismiss();
-                }
-                mMap.clear();
-                if (mAll.isChecked()) {
-                    getBikeInfo(mCurrentLantitude, mCurrentLongitude);
-                } else if (mTrouble.isChecked()) {
-                    getTroubleBikeInfo(mCurrentLantitude, mCurrentLongitude);
-                } else if (mException.isChecked()) {
-                    getExceptionBikeInfo(mCurrentLantitude, mCurrentLongitude);
+                    mMap.clear();
+                    if (mAll.isChecked()) {
+                        getBikeInfo(mCurrentLantitude, mCurrentLongitude);
+                    } else if (mTrouble.isChecked()) {
+                        getTroubleBikeInfo(mCurrentLantitude, mCurrentLongitude);
+                    } else if (mException.isChecked()) {
+                        getExceptionBikeInfo(mCurrentLantitude, mCurrentLongitude);
+                    }
                 }
                 setUserMapCenter(mCurrentLantitude, mCurrentLongitude);
                 break;
@@ -355,16 +357,19 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 try {
                     JSONObject object = new JSONObject(response);
                     String resultStatus = object.optString("resultStatus");
-                    if (resultStatus.equals("0")) {
-                        ToastUtils.showLong(MyApp.getContext(), "车辆编号有误");
-
-                    } else if (resultStatus.equals("1")) {
-                        openScan(mUID, result, mToken);
-                    } else if (resultStatus.equals("3")) {
-                        ToastUtils.showLong(MyApp.getContext(), "我正在被使用！");
-
-                    } else if (resultStatus.equals("5")) {
-                        ToastUtils.showLong(MyApp.getContext(), "我是预约车！");
+                    switch (resultStatus) {
+                        case "0":
+                            ToastUtils.showLong(MyApp.getContext(), "车辆编号有误");
+                            break;
+                        case "1":
+                            openScan(mUID, result, mToken);
+                            break;
+                        case "3":
+                            ToastUtils.showLong(MyApp.getContext(), "我正在被使用！");
+                            break;
+                        case "5":
+                            ToastUtils.showLong(MyApp.getContext(), "我是预约车！");
+                            break;
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -412,15 +417,18 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                     try {
                         JSONObject object = new JSONObject(response);
                         String resultStatus = object.optString("resultStatus");
-                        if (resultStatus.equals("0")) {
-                            ToastUtils.showLong(MyApp.getContext(), "开锁失败！");
-
-                        } else if (resultStatus.equals("1")) {
-                            ToastUtils.showLong(MyApp.getContext(), "开锁成功！");
-                        } else if (resultStatus.equals("2")) {
-                            ToastUtils.showLong(MyApp.getContext(), "您的账号在其他设备上登录，您已被迫下线");
-                            startActivity(new Intent(MainActivity.this, LoginActivity.class));
-                            MainActivity.this.finish();
+                        switch (resultStatus) {
+                            case "0":
+                                ToastUtils.showLong(MyApp.getContext(), "开锁失败！");
+                                break;
+                            case "1":
+                                ToastUtils.showLong(MyApp.getContext(), "开锁成功！");
+                                break;
+                            case "2":
+                                ToastUtils.showLong(MyApp.getContext(), "您的账号在其他设备上登录，您已被迫下线");
+                                startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                                MainActivity.this.finish();
+                                break;
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -678,10 +686,10 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         mMap.setOnMarkerClickListener(new BaiduMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(final Marker marker) {
-                if (marker.getExtraInfo() != null && marker != null) {
+                if (marker.getExtraInfo() != null) {
                     int zIndex = marker.getZIndex();
-                    integers.add(Integer.valueOf(zIndex));
-                    LogUtils.d("覆盖物", zIndex + "\n" + integers.size());
+                    integers.add(zIndex);
+                    LogUtils.d("覆盖物", zIndex + "");
                     Bundle bundle = marker.getExtraInfo();
                     clickMarkLatlng = marker.getPosition();
                     bikeInfo = (BikeInfo) bundle.getSerializable("bikeInfo");
@@ -692,12 +700,31 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                         updateBikeInfo(bikeInfo);
                     }
                 }
-                mMap.clear();
-                addOverlay(bikeInfos);//
                 return true;
             }
 
         });
+
+    }
+
+    //点击百度地图的方法
+    private void clickBaiduMap() {
+        mMap.setOnMapClickListener(new BaiduMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                if (menuWindow != null && menuWindow.isShowing() && routeOverlay != null) {
+                    routeOverlay.removeFromMap();
+                    menuWindow.dismiss();
+                    setUserMapCenter(mCurrentLantitude, mCurrentLongitude);
+                }
+            }
+
+            @Override
+            public boolean onMapPoiClick(MapPoi mapPoi) {
+                return false;
+            }
+        });
+
 
     }
 
@@ -773,6 +800,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             }
         }
         clickBaiduMapMark();
+        clickBaiduMap();
     }
 
 
