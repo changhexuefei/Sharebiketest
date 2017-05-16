@@ -51,13 +51,12 @@ public class BikeInfo implements Serializable {
 
     private int bicycleId;
     private int bicycleNo;
-    private int unitPrice;
+    private float unitPrice;
     private String address;
-    private Object releaseTime;
     private String systemTime;
     private String longitude;
     private String latitude;
-    private Object maxLng;
+
 
     public int getBicycleId() {
         return bicycleId;
@@ -75,11 +74,11 @@ public class BikeInfo implements Serializable {
         this.bicycleNo = bicycleNo;
     }
 
-    public int getUnitPrice() {
+    public float getUnitPrice() {
         return unitPrice;
     }
 
-    public void setUnitPrice(int unitPrice) {
+    public void setUnitPrice(float unitPrice) {
         this.unitPrice = unitPrice;
     }
 
@@ -89,14 +88,6 @@ public class BikeInfo implements Serializable {
 
     public void setAddress(String address) {
         this.address = address;
-    }
-
-    public Object getReleaseTime() {
-        return releaseTime;
-    }
-
-    public void setReleaseTime(Object releaseTime) {
-        this.releaseTime = releaseTime;
     }
 
     public String getSystemTime() {
@@ -123,11 +114,4 @@ public class BikeInfo implements Serializable {
         this.latitude = latitude;
     }
 
-    public Object getMaxLng() {
-        return maxLng;
-    }
-
-    public void setMaxLng(Object maxLng) {
-        this.maxLng = maxLng;
-    }
 }

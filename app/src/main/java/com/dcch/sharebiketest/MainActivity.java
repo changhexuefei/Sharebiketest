@@ -10,6 +10,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
@@ -131,6 +132,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     private String mUID;
     private ImageView mUserIcon;
     private TextView mUserName;
+    private boolean mHasPlanRoute;
 
 
     @Override
@@ -296,6 +298,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 if (menuWindow != null && menuWindow.isShowing() && routeOverlay != null) {
                     routeOverlay.removeFromMap();
                     menuWindow.dismiss();
+                    mSubclauses.setVisibility(View.VISIBLE);
                     mMap.clear();
                     if (mAll.isChecked()) {
                         getBikeInfo(mCurrentLantitude, mCurrentLongitude);
@@ -528,10 +531,9 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                                 bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
                                 bikeInfo.setLatitude(jsonObject.getString("latitude"));
                                 bikeInfo.setLongitude(jsonObject.getString("longitude"));
-                                bikeInfo.setUnitPrice(jsonObject.getInt("unitPrice"));
+                                bikeInfo.setUnitPrice(Float.valueOf(jsonObject.getString("unitPrice")));
                                 bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
                                 bikeInfos.add(bikeInfo);
-
                             }
                             addOverlay(bikeInfos);
                             LogUtils.d("数量", bikeInfos.size() + "1");
@@ -714,7 +716,16 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             public void onMapClick(LatLng latLng) {
                 if (menuWindow != null && menuWindow.isShowing() && routeOverlay != null) {
                     routeOverlay.removeFromMap();
+                    mMap.clear();
                     menuWindow.dismiss();
+                    mSubclauses.setVisibility(View.VISIBLE);
+                    if (mAll.isChecked()) {
+                        getBikeInfo(mCurrentLantitude, mCurrentLongitude);
+                    } else if (mTrouble.isChecked()) {
+                        getTroubleBikeInfo(mCurrentLantitude, mCurrentLongitude);
+                    } else if (mException.isChecked()) {
+                        getExceptionBikeInfo(mCurrentLantitude, mCurrentLongitude);
+                    }
                     setUserMapCenter(mCurrentLantitude, mCurrentLongitude);
                 }
             }
@@ -729,8 +740,8 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     }
 
     private void updateBikeInfo(BikeInfo bikeInfo) {
-        boolean hasPlanRoute = false;
-        if (!hasPlanRoute) {
+        mHasPlanRoute = false;
+        if (!mHasPlanRoute) {
             this.bikeInfo = bikeInfo;
             Double doulat = Double.valueOf(bikeInfo.getLatitude());
             Double doulon = Double.valueOf(bikeInfo.getLongitude());
@@ -743,19 +754,23 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         if (menuWindow == null) {
             menuWindow = new SelectPicPopupWindow(MainActivity.this, bikeInfo);
         }
+        mSubclauses.setVisibility(View.GONE);
         menuWindow.setFocusable(false);
         menuWindow.setOutsideTouchable(false);
-        menuWindow.showAsDropDown(findViewById(R.id.top));
+        menuWindow.showAsDropDown(findViewById(R.id.top),0,0, Gravity.CENTER);
+//        menuWindow.showAtLocation(findViewById(R.id.nav),0,0,0);
+//        menuWindow.showAsDropDown();
     }
 
     private void drawPlanRoute(PlanNode endNodeStr) {
-        if (routeOverlay != null)
+        if (routeOverlay != null) {
             routeOverlay.removeFromMap();
+            mMap.clear();
+            if (menuWindow != null && menuWindow.isShowing()) {
+                addOverlay(bikeInfos);
+            }
+        }
         if (endNodeStr != null) {
-            Log.d("gao", "changeLatitude-----startNode--------" + startNodeStr.getLocation().latitude);
-            Log.d("gao", "changeLongitude-----startNode--------" + startNodeStr.getLocation().longitude);
-            Log.d("gao", "changeLatitude-----startNode--------" + endNodeStr.getLocation().latitude);
-            Log.d("gao", "changeLongitude-----startNode--------" + endNodeStr.getLocation().longitude);
             mRPSearch.walkingSearch((new WalkingRoutePlanOption()).from(startNodeStr).to(endNodeStr));
         }
     }

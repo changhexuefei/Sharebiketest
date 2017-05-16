@@ -5,6 +5,7 @@
         <item name="colorPrimary">@color/colorHeading</item>
         <item name="colorPrimaryDark">@color/colorHeading</item>
         <item name="colorAccent">@color/colorHeading</item>
+
     </style>
 
     <style name="home_selector">
