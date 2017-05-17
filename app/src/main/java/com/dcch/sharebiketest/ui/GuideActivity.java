@@ -77,7 +77,7 @@ public class GuideActivity extends BaseActivity {
         btn_start_main.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MyApp.getContext(), LoginActivity.class);
+                Intent intent = new Intent(GuideActivity.this, LoginActivity.class);
                 startActivity(intent);
                 SPUtils.put(MyApp.getContext(), "isStartGuide", true);
                 SPUtils.put(MyApp.getContext(), "isfirst", false);

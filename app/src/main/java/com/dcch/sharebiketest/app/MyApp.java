@@ -6,6 +6,8 @@ import android.content.Context;
 
 import com.baidu.mapapi.SDKInitializer;
 import com.dcch.sharebiketest.http.HttpUtils;
+import com.squareup.leakcanary.LeakCanary;
+import com.squareup.leakcanary.RefWatcher;
 import com.zhy.http.okhttp.log.LoggerInterceptor;
 
 import java.util.LinkedList;
@@ -22,6 +24,7 @@ public class MyApp extends Application {
     private List<Activity> activityList = new LinkedList();
     private static MyApp instance;
     private static Context mContext;
+    private static RefWatcher sRefWatcher;
 
     public MyApp() {
     }
@@ -40,6 +43,12 @@ public class MyApp extends Application {
         //注意该方法要再setContentView方法之前实现
         mContext = getApplicationContext();
         SDKInitializer.initialize(mContext);
+        if (LeakCanary.isInAnalyzerProcess(this)) {
+            // This process is dedicated to LeakCanary for heap analysis.
+            // You should not init your app in this process.
+            return;
+        }
+        sRefWatcher = LeakCanary.install(this);
 
         //初始化OkHttp
         OkHttpClient okHttpClient = new OkHttpClient.Builder()

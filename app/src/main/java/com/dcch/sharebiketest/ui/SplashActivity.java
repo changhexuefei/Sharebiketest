@@ -9,7 +9,6 @@ import android.widget.RelativeLayout;
 
 import com.dcch.sharebiketest.MainActivity;
 import com.dcch.sharebiketest.R;
-import com.dcch.sharebiketest.app.MyApp;
 import com.dcch.sharebiketest.base.BaseActivity;
 import com.dcch.sharebiketest.moudle.login.activity.LoginActivity;
 import com.dcch.sharebiketest.utils.LogUtils;
@@ -43,7 +42,6 @@ public class SplashActivity extends BaseActivity {
     };
 
 
-
     @Override
     protected int getLayoutId() {
         return R.layout.activity_splash;
@@ -67,19 +65,16 @@ public class SplashActivity extends BaseActivity {
 
 
     private void switchPage() {
-        boolean isStartGuide = (boolean) SPUtils.get(MyApp.getContext(), "isStartGuide", false);
+        boolean isStartGuide = (boolean) SPUtils.get(SplashActivity.this, "isStartGuide", false);
         if (SPUtils.isLogin()) {
             LogUtils.e("已经登录...");
-            Intent login = new Intent(MyApp.getContext(), MainActivity.class);
-            startActivity(login);
-            SplashActivity.this.finish();
+            goMain();
         } else {
             LogUtils.e("没有登录...");
             if (isStartGuide) {
                 goLogin();
             } else {
-                startActivity(new Intent(MyApp.getContext(), GuideActivity.class));
-                finish();
+                goGuide();
             }
         }
     }
@@ -112,4 +107,12 @@ public class SplashActivity extends BaseActivity {
         SplashActivity.this.finish();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacksAndMessages(null);
+        if (handler != null) {
+            handler = null;
+        }
+    }
 }

@@ -10,7 +10,6 @@ import android.widget.Toast;
 
 import com.dcch.sharebiketest.MainActivity;
 import com.dcch.sharebiketest.R;
-import com.dcch.sharebiketest.app.MyApp;
 import com.dcch.sharebiketest.base.BaseActivity;
 import com.dcch.sharebiketest.http.Api;
 import com.dcch.sharebiketest.utils.ClickUtils;
@@ -93,8 +92,8 @@ public class LoginActivity extends BaseActivity {
                 LogUtils.d("登录结果", response);
                 if (JsonUtils.isSuccess(response)) {
                     ToastUtils.showShort(LoginActivity.this, "登录成功");
-                    SPUtils.put(MyApp.getContext(), "islogin", true);
-                    SPUtils.put(MyApp.getContext(), "userDetail", response);
+                    SPUtils.put(LoginActivity.this, "islogin", true);
+                    SPUtils.put(LoginActivity.this, "userDetail", response);
                     startActivity(new Intent(LoginActivity.this, MainActivity.class));
                     LoginActivity.this.finish();
                 } else {
