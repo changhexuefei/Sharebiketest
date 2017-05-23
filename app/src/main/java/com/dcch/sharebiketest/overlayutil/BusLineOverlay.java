@@ -25,7 +25,7 @@ public class BusLineOverlay extends OverlayManager {
 
     /**
      * 构造函数
-     * 
+     *
      * @param baiduMap
      *            该BusLineOverlay所引用的 BaiduMap 对象
      */
@@ -35,7 +35,7 @@ public class BusLineOverlay extends OverlayManager {
 
     /**
      * 设置公交线数据
-     * 
+     *
      * @param result
      *            公交线路结果数据
      */
@@ -76,7 +76,7 @@ public class BusLineOverlay extends OverlayManager {
 
     /**
      * 覆写此方法以改变默认点击行为
-     * 
+     *
      * @param index
      *            被点击的站点在
      *            {@link BusLineResult#getStations()}
@@ -97,7 +97,7 @@ public class BusLineOverlay extends OverlayManager {
         } else {
             return false;
         }
-        
+
     }
 
     @Override

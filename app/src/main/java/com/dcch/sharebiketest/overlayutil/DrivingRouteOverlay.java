@@ -30,7 +30,7 @@ public class DrivingRouteOverlay extends OverlayManager {
 
     /**
      * 构造函数
-     * 
+     *
      * @param baiduMap
      *            该DrivingRouteOvelray引用的 BaiduMap
      */
@@ -48,7 +48,7 @@ public class DrivingRouteOverlay extends OverlayManager {
         // step node
         if (mRouteLine.getAllStep() != null
                 && mRouteLine.getAllStep().size() > 0) {
-            
+
             for (DrivingStep step : mRouteLine.getAllStep()) {
                 Bundle b = new Bundle();
                 b.putInt("index", mRouteLine.getAllStep().indexOf(step));
@@ -95,11 +95,11 @@ public class DrivingRouteOverlay extends OverlayManager {
         // poly line
         if (mRouteLine.getAllStep() != null
                 && mRouteLine.getAllStep().size() > 0) {
-        
+
             List<DrivingStep> steps = mRouteLine.getAllStep();
             int stepNum = steps.size();
-            
-            
+
+
             List<LatLng> points = new ArrayList<LatLng>();
             ArrayList<Integer> traffics = new ArrayList<Integer>();
             int totalTraffic = 0;
@@ -109,7 +109,7 @@ public class DrivingRouteOverlay extends OverlayManager {
                 } else {
                     points.addAll(steps.get(i).getWayPoints().subList(0, steps.get(i).getWayPoints().size() - 1));
                 }
-                
+
                 totalTraffic += steps.get(i).getWayPoints().size() - 1;
                 if (steps.get(i).getTrafficList() != null && steps.get(i).getTrafficList().length > 0) {
                     for (int j = 0;j < steps.get(i).getTrafficList().length;j++) {
@@ -117,7 +117,7 @@ public class DrivingRouteOverlay extends OverlayManager {
                     }
                 }
             }
-            
+
 //            Bundle indexList = new Bundle();
 //            if (traffics.size() > 0) {
 //                int raffic[] = new int[traffics.size()];
@@ -129,7 +129,7 @@ public class DrivingRouteOverlay extends OverlayManager {
 //                indexList.putIntArray("indexs", raffic);
 //            }
             boolean isDotLine = false;
-            
+
             if (traffics != null && traffics.size() > 0) {
                 isDotLine = true;
             }
@@ -146,7 +146,7 @@ public class DrivingRouteOverlay extends OverlayManager {
 
     /**
      * 设置路线数据
-     * 
+     *
      * @param routeLine
      *            路线数据
      */
@@ -156,7 +156,7 @@ public class DrivingRouteOverlay extends OverlayManager {
 
     /**
      * 覆写此方法以改变默认起点图标
-     * 
+     *
      * @return 起点图标
      */
     public BitmapDescriptor getStartMarker() {
@@ -181,7 +181,7 @@ public class DrivingRouteOverlay extends OverlayManager {
     }
     /**
      * 覆写此方法以改变默认终点图标
-     * 
+     *
      * @return 终点图标
      */
     public BitmapDescriptor getTerminalMarker() {
@@ -190,7 +190,7 @@ public class DrivingRouteOverlay extends OverlayManager {
 
     /**
      * 覆写此方法以改变默认点击处理
-     * 
+     *
      * @param i
      *            线路节点的 index
      * @return 是否处理了该点击事件

@@ -53,5 +53,6 @@ dependencies {
     testCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.1'
     debugCompile 'com.squareup.leakcanary:leakcanary-android:1.5.1'
     releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.1'
-
+    compile files('libs/AMap3DMap_5.1.0_AMapLocation_3.4.0_20170518.jar')
+    compile files('libs/BaiduLBS_Android.jar')
 }

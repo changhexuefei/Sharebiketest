@@ -32,7 +32,7 @@ public class WalkingRouteOverlay extends OverlayManager {
 
     /**
      * 设置路线数据。
-     * 
+     *
      * @param line
      *            路线数据
      */
@@ -112,7 +112,7 @@ public class WalkingRouteOverlay extends OverlayManager {
                     lastStepLastPoint = watPoints.get(watPoints.size() - 1);
                 }
             }
-            
+
         }
 
         return overlayList;
@@ -120,7 +120,7 @@ public class WalkingRouteOverlay extends OverlayManager {
 
     /**
      * 覆写此方法以改变默认起点图标
-     * 
+     *
      * @return 起点图标
      */
     public BitmapDescriptor getStartMarker() {
@@ -131,7 +131,7 @@ public class WalkingRouteOverlay extends OverlayManager {
     }
     /**
      * 覆写此方法以改变默认终点图标
-     * 
+     *
      * @return 终点图标
      */
     public BitmapDescriptor getTerminalMarker() {
@@ -140,7 +140,7 @@ public class WalkingRouteOverlay extends OverlayManager {
 
     /**
      * 处理点击事件
-     * 
+     *
      * @param i
      *            被点击的step在
      *            {@link WalkingRouteLine#getAllStep()}

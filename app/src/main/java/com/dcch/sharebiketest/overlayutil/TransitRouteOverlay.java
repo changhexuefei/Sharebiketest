@@ -27,7 +27,7 @@ public class TransitRouteOverlay extends OverlayManager {
 
     /**
      * 构造函数
-     * 
+     *
      * @param baiduMap
      *            该TransitRouteOverlay引用的 BaiduMap 对象
      */
@@ -46,7 +46,7 @@ public class TransitRouteOverlay extends OverlayManager {
         // step node
         if (mRouteLine.getAllStep() != null
                 && mRouteLine.getAllStep().size() > 0) {
-            
+
             for (TransitRouteLine.TransitStep step : mRouteLine.getAllStep()) {
                 Bundle b = new Bundle();
                 b.putInt("index", mRouteLine.getAllStep().indexOf(step));
@@ -86,7 +86,7 @@ public class TransitRouteOverlay extends OverlayManager {
         // polyline
         if (mRouteLine.getAllStep() != null
                 && mRouteLine.getAllStep().size() > 0) {
-            
+
             for (TransitRouteLine.TransitStep step : mRouteLine.getAllStep()) {
                 if (step.getWayPoints() == null) {
                     continue;
@@ -122,7 +122,7 @@ public class TransitRouteOverlay extends OverlayManager {
 
     /**
      * 设置路线数据
-     * 
+     *
      * @param routeOverlay
      *            路线数据
      */
@@ -132,7 +132,7 @@ public class TransitRouteOverlay extends OverlayManager {
 
     /**
      * 覆写此方法以改变默认起点图标
-     * 
+     *
      * @return 起点图标
      */
     public BitmapDescriptor getStartMarker() {
@@ -141,7 +141,7 @@ public class TransitRouteOverlay extends OverlayManager {
 
     /**
      * 覆写此方法以改变默认终点图标
-     * 
+     *
      * @return 终点图标
      */
     public BitmapDescriptor getTerminalMarker() {
@@ -153,7 +153,7 @@ public class TransitRouteOverlay extends OverlayManager {
     }
     /**
      * 覆写此方法以改变起默认点击行为
-     * 
+     *
      * @param i
      *            被点击的step在
      *            {@link TransitRouteLine#getAllStep()}

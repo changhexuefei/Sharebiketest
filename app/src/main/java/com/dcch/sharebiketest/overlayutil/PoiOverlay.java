@@ -24,7 +24,7 @@ public class PoiOverlay extends OverlayManager {
 
     /**
      * 构造函数
-     * 
+     *
      * @param baiduMap
      *            该 PoiOverlay 引用的 BaiduMap 对象
      */
@@ -34,7 +34,7 @@ public class PoiOverlay extends OverlayManager {
 
     /**
      * 设置POI数据
-     * 
+     *
      * @param poiResult
      *            设置POI数据
      */
@@ -61,14 +61,14 @@ public class PoiOverlay extends OverlayManager {
                     .icon(BitmapDescriptorFactory.fromAssetWithDpi("Icon_mark"
                             + markerSize + ".png")).extraInfo(bundle)
                     .position(mPoiResult.getAllPoi().get(i).location));
-            
+
         }
         return markerList;
     }
 
     /**
      * 获取该 PoiOverlay 的 poi数据
-     * 
+     *
      * @return
      */
     public PoiResult getPoiResult() {
@@ -77,7 +77,7 @@ public class PoiOverlay extends OverlayManager {
 
     /**
      * 覆写此方法以改变默认点击行为
-     * 
+     *
      * @param i
      *            被点击的poi在
      *            {@link PoiResult#getAllPoi()} 中的索引
