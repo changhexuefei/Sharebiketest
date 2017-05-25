@@ -154,6 +154,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         mRPSearch = RoutePlanSearch.newInstance();
         mRPSearch.setOnGetRoutePlanResultListener(this);
         LogUtils.d("地图", mMap + "");
+        
         bikeInfos = new ArrayList<>();
         mAll.setChecked(true);
         // 初始化定位
