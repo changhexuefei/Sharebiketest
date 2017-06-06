@@ -10,12 +10,12 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -51,6 +51,7 @@ import com.baidu.mapapi.search.route.WalkingRouteLine;
 import com.baidu.mapapi.search.route.WalkingRoutePlanOption;
 import com.baidu.mapapi.search.route.WalkingRouteResult;
 import com.dcch.sharebiketest.app.MyApp;
+import com.dcch.sharebiketest.base.AppManager;
 import com.dcch.sharebiketest.base.BaseActivity;
 import com.dcch.sharebiketest.http.Api;
 import com.dcch.sharebiketest.libzxing.zxing.activity.CaptureActivity;
@@ -65,6 +66,7 @@ import com.dcch.sharebiketest.utils.MapUtil;
 import com.dcch.sharebiketest.utils.SPUtils;
 import com.dcch.sharebiketest.utils.ToastUtils;
 import com.dcch.sharebiketest.view.SelectPicPopupWindow;
+import com.hss01248.dialog.StyledDialog;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.StringCallback;
 
@@ -107,6 +109,16 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     NavigationView mNav;
     @BindView(R.id.activity_na)
     DrawerLayout mActivityNa;
+    @BindView(R.id.current_addr)
+    TextView mCurrentAddr;
+    @BindView(R.id.unitPrice)
+    TextView mUnitPrice;
+    @BindView(R.id.distance)
+    TextView mDistance;
+    @BindView(R.id.arrivalTime)
+    TextView mArrivalTime;
+    @BindView(R.id.bike_layout)
+    LinearLayout mBikeLayout;
     private BaiduMap mMap;
     private LocationClient mLocationClient;//定位的客户端
     private float mCurrentAccracy;//当前的精度
@@ -153,7 +165,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         mUserName = (TextView) headerView.findViewById(R.id.userName);
         mRPSearch = RoutePlanSearch.newInstance();
         mRPSearch.setOnGetRoutePlanResultListener(this);
-        LogUtils.d("地图", mMap + "");
 
         bikeInfos = new ArrayList<>();
         mAll.setChecked(true);
@@ -279,6 +290,8 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         option.setIsNeedLocationPoiList(true);//可选，默认false，设置是否需要POI结果，可以在BDLocation.getPoiList里得到
         option.SetIgnoreCacheException(false);//可选，默认false，设置是否收集CRASH信息，默认收集
         mLocationClient.setLocOption(option);
+        clickBaiduMapMark();
+        clickBaiduMap();
     }
 
     @OnClick({R.id.userCenter, R.id.scan, R.id.btn_my_location})
@@ -296,9 +309,9 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 if (ClickUtils.isFastClick()) {
                     return;
                 }
-                if (menuWindow != null && menuWindow.isShowing() && routeOverlay != null) {
+                if (routeOverlay != null) {
                     routeOverlay.removeFromMap();
-                    menuWindow.dismiss();
+                    mBikeLayout.setVisibility(View.GONE);
                     mSubclauses.setVisibility(View.VISIBLE);
                     mMap.clear();
                     if (mAll.isChecked()) {
@@ -335,9 +348,11 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 case 0:
                     if (bundle != null) {
                         String result = bundle.getString("result");
-                        CheckRepairBicycleNo(result);
-
-                        ToastUtils.showLong(this, result);
+                        if(result!=null){
+                            result = result.substring(result.length() - 9, result.length());
+                            CheckRepairBicycleNo(result);
+                            ToastUtils.showLong(this, result);
+                        }
                     }
                     break;
             }
@@ -450,6 +465,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         builder.target(ll).zoom(18.0f);
         mMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
     }
+
 
     //实现定位回调监听
     private class MyLocationListener implements BDLocationListener {
@@ -689,17 +705,21 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         mMap.setOnMarkerClickListener(new BaiduMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(final Marker marker) {
+                StyledDialog.buildMdLoading(MainActivity.this, "路线规划中..", true, false).show();
                 if (marker.getExtraInfo() != null) {
                     int zIndex = marker.getZIndex();
                     integers.add(zIndex);
-                    LogUtils.d("覆盖物", zIndex + "");
                     Bundle bundle = marker.getExtraInfo();
                     clickMarkLatlng = marker.getPosition();
                     bikeInfo = (BikeInfo) bundle.getSerializable("bikeInfo");
                     if (bikeInfo != null) {
-                        if (menuWindow == null || !menuWindow.isShowing()) {
-                            showMenuWindow(bikeInfo);
-                        }
+                        mSubclauses.setVisibility(View.GONE);
+                        mBikeLayout.setVisibility(View.VISIBLE);
+                        mCurrentAddr.setText(bikeInfo.getAddress());
+                        mUnitPrice.setText(String.valueOf(bikeInfo.getUnitPrice()));
+//                        if (menuWindow == null || !menuWindow.isShowing()) {
+//                            showMenuWindow(bikeInfo);
+//                        }
                         updateBikeInfo(bikeInfo);
                     }
                 }
@@ -715,10 +735,10 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         mMap.setOnMapClickListener(new BaiduMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                if (menuWindow != null && menuWindow.isShowing() && routeOverlay != null) {
+                if ( routeOverlay != null) {
                     routeOverlay.removeFromMap();
                     mMap.clear();
-                    menuWindow.dismiss();
+                    mBikeLayout.setVisibility(View.GONE);
                     mSubclauses.setVisibility(View.VISIBLE);
                     if (mAll.isChecked()) {
                         getBikeInfo(mCurrentLantitude, mCurrentLongitude);
@@ -747,29 +767,29 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             Double doulat = Double.valueOf(bikeInfo.getLatitude());
             Double doulon = Double.valueOf(bikeInfo.getLongitude());
             endNodeStr = PlanNode.withLocation(new LatLng(doulat, doulon));
+            StyledDialog.dismissLoading();
             drawPlanRoute(endNodeStr);
         }
     }
 
-    private void showMenuWindow(BikeInfo bikeInfo) {
-        if (menuWindow == null) {
-            menuWindow = new SelectPicPopupWindow(MainActivity.this, bikeInfo);
-        }
-        mSubclauses.setVisibility(View.GONE);
-        menuWindow.setFocusable(false);
-        menuWindow.setOutsideTouchable(false);
-        menuWindow.showAsDropDown(findViewById(R.id.top),0,0, Gravity.CENTER);
-//        menuWindow.showAtLocation(findViewById(R.id.nav),0,0,0);
-//        menuWindow.showAsDropDown();
-    }
+//    private void showMenuWindow(BikeInfo bikeInfo) {
+//        if (menuWindow == null) {
+//            menuWindow = new SelectPicPopupWindow(MainActivity.this, bikeInfo);
+//        }
+//        mSubclauses.setVisibility(View.GONE);
+//        menuWindow.setFocusable(false);
+//        menuWindow.setOutsideTouchable(false);
+//        menuWindow.showAsDropDown(findViewById(R.id.top), 0, 0, Gravity.CENTER);
+//
+//    }
 
     private void drawPlanRoute(PlanNode endNodeStr) {
         if (routeOverlay != null) {
             routeOverlay.removeFromMap();
             mMap.clear();
-            if (menuWindow != null && menuWindow.isShowing()) {
-                addOverlay(bikeInfos);
-            }
+//            if (menuWindow != null && menuWindow.isShowing()) {
+            addOverlay(bikeInfos);
+//            }
         }
         if (endNodeStr != null) {
             mRPSearch.walkingSearch((new WalkingRoutePlanOption()).from(startNodeStr).to(endNodeStr));
@@ -793,7 +813,19 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     protected void onDestroy() {
         super.onDestroy();
         //在activity执行onDestroy时执行mMapView.onDestroy()，实现地图生命周期管理
+        mMap.setMyLocationEnabled(false);
         mTestMapView.onDestroy();
+        StyledDialog.dismiss();
+
+        if (mLocationClient != null) {
+            mLocationClient.unRegisterLocationListener(mMyLocationListener);
+            mLocationClient.stop();
+        }
+        if (mRPSearch != null) {
+            mRPSearch.destroy();
+        }
+
+
     }
 
     @Override
@@ -815,8 +847,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 e.printStackTrace();
             }
         }
-        clickBaiduMapMark();
-        clickBaiduMap();
+
     }
 
 
@@ -843,40 +874,22 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             int distance = walkingRouteLine.getDistance();
             int walkTime = walkingRouteLine.getDuration() / 60;
             LogUtils.d("gao", distance + "\n" + walkTime + "\n" + walkingRouteLine);
-//            mWalkTime = distance / 60;
             String distance1 = MapUtil.distanceFormatter(distance);
             String castTime = String.valueOf(walkTime);
             if (!distance1.equals("")) {
-                menuWindow.mDistance.setText(distance1);
+                mDistance.setText(distance1);
             }
             if (!castTime.equals("")) {
-                menuWindow.mArrivalTime.setText(castTime + "分钟");
+                mArrivalTime.setText(castTime + "分钟");
             }
 
         }
         WalkingRouteOverlay overlay = new MyWalkingRouteOverlay(mMap);
-//        /**
-//         * 设置地图 Marker 覆盖物点击事件监听者
-//         * 需要实现的方法：     onMarkerClick(Marker marker)
-//         * */
         mMap.setOnMarkerClickListener(overlay);
         routeOverlay = overlay;
-
         if (!overlay.equals("")) {
-//            /**
-//             * public void setData(WalkingRouteLine line)设置路线数据。
-//             * 参数:line - 路线数据
-//             * */
             overlay.setData(walkingRouteResult.getRouteLines().get(0));
-//            /**
-//             * public final void addToMap()将所有Overlay 添加到地图上
-//             * */
             overlay.addToMap();
-//            /**
-//             * public void zoomToSpan()
-//             * 缩放地图，使所有Overlay都在合适的视野内
-//             * 注： 该方法只对Marker类型的overlay有效
-//             * */
             overlay.zoomToSpan();
         }
     }
@@ -941,7 +954,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 Toast.makeText(this, "再按一次退出程序", Toast.LENGTH_SHORT).show();
                 mExitTime = System.currentTimeMillis();
             } else {
-                MyApp.getInstance().exit();
+                AppManager.AppExit(this);
                 finish();
             }
             return true;

@@ -4,8 +4,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Window;
 
-import com.dcch.sharebiketest.app.MyApp;
-
 import butterknife.ButterKnife;
 
 public abstract class BaseActivity extends AppCompatActivity {
@@ -16,7 +14,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(getLayoutId());
         ButterKnife.bind(this);
-        MyApp.getInstance().addActivity(this);
+        AppManager.addActivity(this);
         initData();
         initListener();
     }
@@ -31,7 +29,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-//        App.getInstance().exit();
+       AppManager.finishActivity(this);
     }
 
     @Override

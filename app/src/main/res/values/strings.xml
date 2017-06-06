@@ -12,4 +12,5 @@
     <string name="open">打开手电筒</string>
     <string name="close">关闭手电筒</string>
     <string name="verify">确认</string>
+    <string name="beijing">北京</string>
 </resources>

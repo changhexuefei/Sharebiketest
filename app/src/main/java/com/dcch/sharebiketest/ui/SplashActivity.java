@@ -9,6 +9,7 @@ import android.widget.RelativeLayout;
 
 import com.dcch.sharebiketest.MainActivity;
 import com.dcch.sharebiketest.R;
+import com.dcch.sharebiketest.base.AppManager;
 import com.dcch.sharebiketest.base.BaseActivity;
 import com.dcch.sharebiketest.moudle.login.activity.LoginActivity;
 import com.dcch.sharebiketest.utils.LogUtils;
@@ -110,6 +111,7 @@ public class SplashActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        AppManager.finishActivity(this);
         handler.removeCallbacksAndMessages(null);
         if (handler != null) {
             handler = null;

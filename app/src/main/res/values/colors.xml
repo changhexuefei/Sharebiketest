@@ -7,4 +7,6 @@
     <color name="common">#262262</color>
     <color name="colorTitle">#F8941D</color>
     <color name="lineColor">#f4f0f0</color>
+    <color name="color_747474">#747474</color>
+    <color name="black">#000000</color>
 </resources>

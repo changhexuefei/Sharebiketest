@@ -15,7 +15,6 @@
  */
 package com.dcch.sharebiketest.libzxing.zxing.activity;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -39,6 +38,7 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.dcch.sharebiketest.R;
+import com.dcch.sharebiketest.base.BaseActivity;
 import com.dcch.sharebiketest.libzxing.zxing.camera.CameraManager;
 import com.dcch.sharebiketest.libzxing.zxing.decode.DecodeThread;
 import com.dcch.sharebiketest.libzxing.zxing.utils.BeepManager;
@@ -46,14 +46,12 @@ import com.dcch.sharebiketest.libzxing.zxing.utils.CaptureActivityHandler;
 import com.dcch.sharebiketest.libzxing.zxing.utils.InactivityTimer;
 import com.dcch.sharebiketest.moudle.user.activity.ManualInputActivity;
 import com.dcch.sharebiketest.utils.DensityUtils;
-import com.dcch.sharebiketest.utils.ToastUtils;
 import com.google.zxing.Result;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 
@@ -66,14 +64,13 @@ import butterknife.OnClick;
  * @author dswitkin@google.com (Daniel Switkin)
  * @author Sean Owen
  */
-public final class CaptureActivity extends Activity implements SurfaceHolder.Callback {
+public final class CaptureActivity extends BaseActivity implements SurfaceHolder.Callback {
 
     private static final String TAG = CaptureActivity.class.getSimpleName();
 
     @BindView(R.id.back)
     ImageView mBack;
-    @BindView(R.id.help_tip)
-    TextView mHelpTip;
+
     @BindView(R.id.manualInput)
     TextView mManualInput;
     @BindView(R.id.openFlashLight)
@@ -95,7 +92,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     private boolean isHasSurface = false;
     private Camera camera = null;
     private Camera.Parameters parameters = null;
-    public static boolean kaiguan = true; // 定义开关状态，状态为false，打开状态，状态为true，关闭状态
     private String mMsg;
 
     public Handler getHandler() {
@@ -112,8 +108,8 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        setContentView(R.layout.activity_capture);
-        ButterKnife.bind(this);
+//        setContentView(R.layout.activity_capture);
+//        ButterKnife.bind(this);
         controlIconSize();
 
         scanPreview = (SurfaceView) findViewById(R.id.capture_preview);
@@ -130,6 +126,16 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         animation.setRepeatCount(-1);
         animation.setRepeatMode(Animation.RESTART);
         scanLine.startAnimation(animation);
+    }
+
+    @Override
+    protected int getLayoutId() {
+        return R.layout.activity_capture;
+    }
+
+    @Override
+    protected void initData() {
+
     }
 
     private void controlIconSize() {
@@ -382,16 +388,12 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     }
 
 
-    @OnClick({R.id.back, R.id.help_tip})
+    @OnClick(R.id.back)
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.back:
                 finish();
                 break;
-            case R.id.help_tip:
-                ToastUtils.showShort(CaptureActivity.this, "我是帮助");
-                break;
-
         }
     }
 

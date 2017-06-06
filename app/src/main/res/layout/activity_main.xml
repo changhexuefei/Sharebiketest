@@ -79,6 +79,129 @@
                 android:text="故障单车"/>
         </RadioGroup>
 
+        <LinearLayout
+            android:visibility="gone"
+            android:id="@+id/bike_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/top"
+            android:background="#ffffff"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/current_addr"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="15dp"
+                android:layout_marginRight="15dp"
+                android:layout_marginTop="8dp"
+                android:drawableLeft="@mipmap/bike_info_board_location"
+                android:paddingLeft="5dp"
+                android:text="@string/beijing"
+                android:textColor="@color/black"
+                android:textSize="16sp"/>
+
+            <View
+                android:id="@+id/divider"
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginLeft="15dp"
+                android:layout_marginRight="15dp"
+                android:layout_marginTop="8dp"
+                android:background="#bbbbbb"/>
+
+            <LinearLayout
+                android:id="@+id/bike_distance_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/bike_layout_margin"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp">
+
+                    <RelativeLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center"
+                        android:layout_weight="1">
+
+                        <TextView
+                            android:id="@+id/unitPrice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:layout_marginTop="10dp"
+                            android:text="1.0元"
+                            android:textColor="@color/colorTitle"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/unitPrice"
+                            android:layout_centerInParent="true"
+                            android:layout_marginTop="2dp"
+                            android:text="每小时"/>
+
+
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1">
+
+                        <TextView
+                            android:id="@+id/distance"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:layout_marginTop="10dp"
+                            android:text="1.0米"
+                            android:textColor="@color/colorTitle"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/distance"
+                            android:layout_centerInParent="true"
+                            android:layout_marginTop="2dp"
+                            android:text="距离起始位置"/>
+
+
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1">
+
+                        <TextView
+                            android:id="@+id/arrivalTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:layout_marginTop="10dp"
+                            android:text="1.0分钟"
+                            android:textColor="@color/colorTitle"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/arrivalTime"
+                            android:layout_centerInParent="true"
+                            android:layout_marginTop="2dp"
+                            android:text="步行可到达"/>
+
+
+                    </RelativeLayout>
+
+                </LinearLayout>
+            </LinearLayout>
+
+        </LinearLayout>
+
 
         <TextView
             android:id="@+id/scan"
