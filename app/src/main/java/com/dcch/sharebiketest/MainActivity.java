@@ -63,6 +63,7 @@ import com.dcch.sharebiketest.overlayutil.WalkingRouteOverlay;
 import com.dcch.sharebiketest.utils.ClickUtils;
 import com.dcch.sharebiketest.utils.LogUtils;
 import com.dcch.sharebiketest.utils.MapUtil;
+import com.dcch.sharebiketest.utils.NetUtils;
 import com.dcch.sharebiketest.utils.SPUtils;
 import com.dcch.sharebiketest.utils.ToastUtils;
 import com.dcch.sharebiketest.view.SelectPicPopupWindow;
@@ -204,7 +205,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                                         SPUtils.clear(MyApp.getContext());
                                         SPUtils.put(MyApp.getContext(), "islogin", false);
                                         SPUtils.put(MyApp.getContext(), "isfirst", false);
-                                        SPUtils.put(MyApp.getContext(), "isStartGuide", true);
+//                                        SPUtils.put(MyApp.getContext(), "isStartGuide", true);
                                         finish();
                                     }
                                 }).create()
@@ -348,10 +349,11 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 case 0:
                     if (bundle != null) {
                         String result = bundle.getString("result");
-                        if(result!=null){
+                        if (result != null) {
                             result = result.substring(result.length() - 9, result.length());
-                            CheckRepairBicycleNo(result);
-                            ToastUtils.showLong(this, result);
+                            if (NetUtils.isConnected(MyApp.getContext())) {
+                                CheckRepairBicycleNo(result);
+                            }
                         }
                     }
                     break;
@@ -735,7 +737,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         mMap.setOnMapClickListener(new BaiduMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                if ( routeOverlay != null) {
+                if (routeOverlay != null) {
                     routeOverlay.removeFromMap();
                     mMap.clear();
                     mBikeLayout.setVisibility(View.GONE);
@@ -771,17 +773,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             drawPlanRoute(endNodeStr);
         }
     }
-
-//    private void showMenuWindow(BikeInfo bikeInfo) {
-//        if (menuWindow == null) {
-//            menuWindow = new SelectPicPopupWindow(MainActivity.this, bikeInfo);
-//        }
-//        mSubclauses.setVisibility(View.GONE);
-//        menuWindow.setFocusable(false);
-//        menuWindow.setOutsideTouchable(false);
-//        menuWindow.showAsDropDown(findViewById(R.id.top), 0, 0, Gravity.CENTER);
-//
-//    }
 
     private void drawPlanRoute(PlanNode endNodeStr) {
         if (routeOverlay != null) {

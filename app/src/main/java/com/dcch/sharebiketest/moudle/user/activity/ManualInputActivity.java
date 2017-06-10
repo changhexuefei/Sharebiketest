@@ -107,7 +107,6 @@ public class ManualInputActivity extends BaseActivity {
         mManualInputArea.setOnTextFinishListener(new CodeInputEditText.OnTextFinishListener() {
             @Override
             public void onFinish(String str) {
-//                Toast.makeText(ManualInputActivity.this, str, Toast.LENGTH_SHORT).show();
                 bikeNo = str;
                 mEnsure.setEnabled(true);
                 mEnsure.setBackgroundColor(Color.parseColor("#F8941D"));

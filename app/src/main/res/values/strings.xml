@@ -13,4 +13,10 @@
     <string name="close">关闭手电筒</string>
     <string name="verify">确认</string>
     <string name="beijing">北京</string>
+    <string name="userName">用户名</string>
+    <string name="input_userName">请输入用户名</string>
+    <string name="password">密 码</string>
+    <string name="input_password">请输入密码</string>
+    <string name="input_bikeNo">输入编号开锁</string>
+    <string name="input_tips">请确认您输入了正确的自行车编号</string>
 </resources>

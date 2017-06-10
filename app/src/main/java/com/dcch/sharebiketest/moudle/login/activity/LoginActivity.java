@@ -10,11 +10,13 @@ import android.widget.Toast;
 
 import com.dcch.sharebiketest.MainActivity;
 import com.dcch.sharebiketest.R;
+import com.dcch.sharebiketest.app.MyApp;
 import com.dcch.sharebiketest.base.BaseActivity;
 import com.dcch.sharebiketest.http.Api;
 import com.dcch.sharebiketest.utils.ClickUtils;
 import com.dcch.sharebiketest.utils.JsonUtils;
 import com.dcch.sharebiketest.utils.LogUtils;
+import com.dcch.sharebiketest.utils.NetUtils;
 import com.dcch.sharebiketest.utils.SPUtils;
 import com.dcch.sharebiketest.utils.ToastUtils;
 import com.zhy.http.okhttp.OkHttpUtils;
@@ -74,7 +76,10 @@ public class LoginActivity extends BaseActivity {
             Toast.makeText(getApplicationContext(), "账号或密码不能为空", Toast.LENGTH_SHORT).show();
             return;
         }
-        login(userName, pwd);
+        if (NetUtils.isConnected(MyApp.getContext())) {
+            login(userName, pwd);
+        }
+
     }
 
     private void login(String userName, String pwd) {
@@ -98,9 +103,7 @@ public class LoginActivity extends BaseActivity {
                     LoginActivity.this.finish();
                 } else {
                     ToastUtils.showShort(LoginActivity.this, "用户名或者密码错误！");
-
                 }
-
             }
         });
     }

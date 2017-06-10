@@ -8,6 +8,11 @@
 
     </style>
 
+    <!-- 为 Theme 设置背景图 -->
+    <style name="Splash_Theme" parent="AppTheme">
+        <item name="android:windowBackground">@drawable/splash</item>
+    </style>
+
     <style name="home_selector">
         <item name="android:background">@drawable/selector_radio_button</item>
         <item name="android:button">@null</item>

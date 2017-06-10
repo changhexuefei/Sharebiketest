@@ -9,7 +9,6 @@ import android.widget.RelativeLayout;
 
 import com.dcch.sharebiketest.MainActivity;
 import com.dcch.sharebiketest.R;
-import com.dcch.sharebiketest.base.AppManager;
 import com.dcch.sharebiketest.base.BaseActivity;
 import com.dcch.sharebiketest.moudle.login.activity.LoginActivity;
 import com.dcch.sharebiketest.utils.LogUtils;
@@ -23,15 +22,14 @@ public class SplashActivity extends BaseActivity {
     @BindView(R.id.rl_splash_root)
     RelativeLayout mRlSplashRoot;
 
-    private final static int SWITCH_LOGINACTIVITY = 1000;
+    private final static int SWITCH_SWITCHPAGE = 1000;
     private final static int SWITCH_GUIDACTIVITY = 1001;
 
 
     private Handler handler = new Handler() {
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case SWITCH_LOGINACTIVITY:
-//                    goLogin();
+                case SWITCH_SWITCHPAGE:
                     switchPage();
                     break;
                 case SWITCH_GUIDACTIVITY:
@@ -58,25 +56,20 @@ public class SplashActivity extends BaseActivity {
         animation.setFillAfter(true);
         mRlSplashRoot.startAnimation(animation);
         if (SPUtils.isFirst()) {
-            handler.sendEmptyMessageDelayed(SWITCH_GUIDACTIVITY, 3000);
+            handler.sendEmptyMessageDelayed(SWITCH_GUIDACTIVITY, 2000);
         } else {
-            handler.sendEmptyMessageDelayed(SWITCH_LOGINACTIVITY, 3000);
+            handler.sendEmptyMessageDelayed(SWITCH_SWITCHPAGE, 2000);
         }
     }
 
 
     private void switchPage() {
-        boolean isStartGuide = (boolean) SPUtils.get(SplashActivity.this, "isStartGuide", false);
         if (SPUtils.isLogin()) {
             LogUtils.e("已经登录...");
             goMain();
         } else {
             LogUtils.e("没有登录...");
-            if (isStartGuide) {
-                goLogin();
-            } else {
-                goGuide();
-            }
+            goLogin();
         }
     }
 
@@ -111,10 +104,6 @@ public class SplashActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        AppManager.finishActivity(this);
         handler.removeCallbacksAndMessages(null);
-        if (handler != null) {
-            handler = null;
-        }
     }
 }

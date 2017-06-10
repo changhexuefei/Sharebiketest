@@ -18,15 +18,15 @@
         android:layout_marginLeft="15dp"
         android:layout_marginRight="15dp"
         android:layout_marginTop="10dp"
-        android:background="#dad5d5"
+        android:background="@color/log_text_color"
         android:orientation="horizontal">
 
         <TextView
             android:layout_width="60dp"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="用户名"
-            android:textColor="#000000"/>
+            android:text="@string/userName"
+            android:textColor="@color/black"/>
 
         <EditText
             android:id="@+id/userName"
@@ -34,10 +34,10 @@
             android:layout_height="40dp"
             android:layout_weight="1"
             android:background="@null"
-            android:hint="请输入用户名"
+            android:hint="@string/input_userName"
             android:inputType="text"
             android:paddingLeft="20dp"
-            android:textColorHint="#c2baba"
+            android:textColorHint="@color/hint_text_color"
             android:textCursorDrawable="@null"
             android:textSize="12sp"/>
 
@@ -52,14 +52,14 @@
         android:layout_below="@+id/userNameArea"
         android:layout_marginRight="15dp"
         android:layout_marginTop="10dp"
-        android:background="#dad5d5">
+        android:background="@color/log_text_color">
 
         <TextView
             android:layout_width="60dp"
             android:layout_height="40dp"
             android:gravity="center"
-            android:text="密  码"
-            android:textColor="#000000"/>
+            android:text="@string/password"
+            android:textColor="@color/black"/>
 
         <EditText
             android:id="@+id/pwd"
@@ -67,10 +67,10 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:background="@null"
-            android:hint="请输入密码"
+            android:hint="@string/input_password"
             android:inputType="number"
             android:paddingLeft="20dp"
-            android:textColorHint="#c2baba"
+            android:textColorHint="@color/hint_text_color"
             android:textCursorDrawable="@null"
             android:textSize="12sp"/>
     </LinearLayout>
@@ -87,7 +87,7 @@
         android:background="@color/colorTitle"
         android:gravity="center"
         android:text="@string/confrim"
-        android:textColor="#ffffff"
+        android:textColor="@color/white"
         android:textSize="18sp"/>
 
 </RelativeLayout>

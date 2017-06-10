@@ -9,4 +9,8 @@
     <color name="lineColor">#f4f0f0</color>
     <color name="color_747474">#747474</color>
     <color name="black">#000000</color>
+    <color name="white">#ffffff</color>
+    <color name="log_text_color">#dad5d5</color>
+    <color name="hint_text_color">#c2baba</color>
+    <color name="input_btn_color">#6b6b6b</color>
 </resources>

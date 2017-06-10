@@ -24,7 +24,6 @@ import java.util.List;
 import butterknife.BindView;
 
 
-
 public class GuideActivity extends BaseActivity {
 
     @BindView(R.id.viewpager_guide)

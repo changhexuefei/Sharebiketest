@@ -58,6 +58,7 @@ public class MyApp extends Application {
                 .build();
         HttpUtils.init(okHttpClient);
     }
+
     public static Context getContext() {
         return mContext;
     }
