@@ -38,12 +38,11 @@
         android:layout_below="@+id/scan_area"/>
 
     <RelativeLayout
-
+        android:layout_below="@+id/scan_area"
         android:id="@+id/capture_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_alignParentLeft="true"
-        android:layout_below="@+id/scan_area">
+        android:layout_alignParentBottom="true">
 
         <ImageView
             android:id="@+id/capture_mask_top"
@@ -104,7 +103,7 @@
                 android:drawableTop="@drawable/manual_input_selector"
                 android:gravity="center"
                 android:text="@string/manual_input"
-                android:textColor="#ffffff"
+                android:textColor="@color/white"
                 android:textSize="12sp"/>
 
             <ToggleButton

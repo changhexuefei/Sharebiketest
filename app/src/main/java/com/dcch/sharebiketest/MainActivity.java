@@ -304,6 +304,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 }
                 MainActivityPermissionsDispatcher.showCameraWithCheck(MainActivity.this);
                 Intent i1 = new Intent(MainActivity.this, CaptureActivity.class);
+                i1.putExtra("msg", "main");
                 startActivityForResult(i1, 0);
                 break;
             case R.id.btn_my_location:

@@ -62,6 +62,7 @@ public class ManualInputActivity extends BaseActivity {
         Intent intent = getIntent();
         if (intent != null) {
             mTag = intent.getStringExtra("tag");
+            LogUtils.d("空的",mTag);
         }
 
     }
