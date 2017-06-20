@@ -34,7 +34,7 @@
                 android:gravity="center"
                 android:text="@string/share_title"
                 android:textColor="@color/common"
-                android:textSize="16sp"/>
+                android:textSize="18sp"/>
 
         </FrameLayout>
 
@@ -62,21 +62,21 @@
                 style="@style/home_selector"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="全部单车"/>
+                android:text="@string/all"/>
 
             <RadioButton
                 android:id="@+id/exception"
                 style="@style/home_selector"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="异常单车"/>
+                android:text="@string/anomaly"/>
 
             <RadioButton
                 android:id="@+id/trouble"
                 style="@style/home_selector"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="故障单车"/>
+                android:text="@string/trouble"/>
         </RadioGroup>
 
         <LinearLayout
@@ -85,7 +85,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/top"
-            android:background="#ffffff"
+            android:background="@color/white"
             android:orientation="vertical">
 
             <TextView
@@ -108,7 +108,7 @@
                 android:layout_marginLeft="15dp"
                 android:layout_marginRight="15dp"
                 android:layout_marginTop="8dp"
-                android:background="#bbbbbb"/>
+                android:background="@color/lineColor"/>
 
             <LinearLayout
                 android:id="@+id/bike_distance_layout"
@@ -220,7 +220,7 @@
             android:paddingRight="20dp"
             android:paddingTop="15dp"
             android:text="@string/unlocking"
-            android:textColor="#ffffff"
+            android:textColor="@color/white"
             android:textSize="16sp"/>
 
         <ImageButton

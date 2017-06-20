@@ -5,8 +5,8 @@ package com.dcch.sharebiketest.http;
  */
 
 public class Api {
-    public static final String BASE_URL = "http://114.112.86.38/MavenSSM/mobile/";
-//    public static final String BASE_URL = "http://192.168.1.131:8080/MavenSSM/mobile/";
+    public static final String BASE_URL = "http://www.70bikes.cn/MavenSSM/mobile/";
+//    public static final String BASE_URL = "http://192.168.1.130:8080/MavenSSM/mobile/";
 //    public static final String BASE_URL = "http://192.168.1.142:8080/MavenSSM/mobile/";
     //请求全部车辆信息
     public static final String FINDBICYCLE = "findBicycle.do?";

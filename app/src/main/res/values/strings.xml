@@ -19,4 +19,7 @@
     <string name="input_password">请输入密码</string>
     <string name="input_bikeNo">输入编号开锁</string>
     <string name="input_tips">请确认您输入了正确的自行车编号</string>
+    <string name="all">全部单车</string>
+    <string name="anomaly">异常单车</string>
+    <string name="trouble">故障单车</string>
 </resources>

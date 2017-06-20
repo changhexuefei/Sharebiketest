@@ -50,9 +50,11 @@ import com.baidu.mapapi.search.route.TransitRouteResult;
 import com.baidu.mapapi.search.route.WalkingRouteLine;
 import com.baidu.mapapi.search.route.WalkingRoutePlanOption;
 import com.baidu.mapapi.search.route.WalkingRouteResult;
+import com.baidu.mapapi.utils.CoordinateConverter;
 import com.dcch.sharebiketest.app.MyApp;
 import com.dcch.sharebiketest.base.AppManager;
 import com.dcch.sharebiketest.base.BaseActivity;
+import com.dcch.sharebiketest.base.CodeEvent;
 import com.dcch.sharebiketest.http.Api;
 import com.dcch.sharebiketest.libzxing.zxing.activity.CaptureActivity;
 import com.dcch.sharebiketest.moudle.home.BikeInfo;
@@ -66,7 +68,6 @@ import com.dcch.sharebiketest.utils.MapUtil;
 import com.dcch.sharebiketest.utils.NetUtils;
 import com.dcch.sharebiketest.utils.SPUtils;
 import com.dcch.sharebiketest.utils.ToastUtils;
-import com.dcch.sharebiketest.view.SelectPicPopupWindow;
 import com.hss01248.dialog.StyledDialog;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.StringCallback;
@@ -74,6 +75,9 @@ import com.zhy.http.okhttp.callback.StringCallback;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.simple.eventbus.EventBus;
+import org.simple.eventbus.Subscriber;
+import org.simple.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -130,22 +134,18 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     private double mCurrentLantitude;//最新一次的经纬度
     private double mCurrentLongitude;
     public MyLocationListener mMyLocationListener;//定位的监听器
-    private double changeLatitude;
     private List<BikeInfo> bikeInfos;
     private BikeInfo bikeInfo;
     Marker mMarker = null;
-    private LatLng clickMarkLatlng;
-    private PlanNode startNodeStr, endNodeStr;
+    private PlanNode startNodeStr;
     OverlayManager routeOverlay = null;//该类提供一个能够显示和管理多个Overlay的基类
     RoutePlanSearch mRPSearch = null;    // 搜索模块，也可去掉地图模块独立使用
-    private SelectPicPopupWindow menuWindow = null; // 自定义弹出框
     boolean useDefaultIcon = false;
     private long mExitTime; //退出时间
     private String mToken;
     private String mUID;
-    private ImageView mUserIcon;
-    private TextView mUserName;
-    private boolean mHasPlanRoute;
+    private String result;
+    private LatLng mLatLng;
 
 
     @Override
@@ -161,9 +161,9 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         mMap = mTestMapView.getMap();
         View headerView = mNav.getHeaderView(0);//获取头布局
         //获得头像
-        mUserIcon = (ImageView) headerView.findViewById(R.id.userIcon);
+        ImageView userIcon = (ImageView) headerView.findViewById(R.id.userIcon);
         //获得用户名
-        mUserName = (TextView) headerView.findViewById(R.id.userName);
+        TextView userName = (TextView) headerView.findViewById(R.id.userName);
         mRPSearch = RoutePlanSearch.newInstance();
         mRPSearch.setOnGetRoutePlanResultListener(this);
 
@@ -349,7 +349,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             switch (requestCode) {
                 case 0:
                     if (bundle != null) {
-                        String result = bundle.getString("result");
+                        result = bundle.getString("result");
                         if (result != null) {
                             result = result.substring(result.length() - 9, result.length());
                             if (NetUtils.isConnected(MyApp.getContext())) {
@@ -427,9 +427,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             OkHttpUtils.post().url(Api.BASE_URL + Api.OPENSCAN).params(map).build().execute(new StringCallback() {
                 @Override
                 public void onError(Call call, Exception e, int id) {
-                    if (!e.equals("")) {
-                        LogUtils.e(e.getMessage());
-                    }
+
                     ToastUtils.showShort(MainActivity.this, "服务器忙，请稍后重试");
                 }
 
@@ -506,7 +504,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 //地图缩放比设置为18
                 builder.target(ll).zoom(18.0f);
                 mMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
-                changeLatitude = location.getLatitude();
+                double changeLatitude = location.getLatitude();
                 double changeLongitude = location.getLongitude();
                 setUserMapCenter(mCurrentLantitude, mCurrentLongitude);
                 //根据手机定位地点，得到车辆信息的方法
@@ -549,8 +547,8 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                                 bikeInfo.setAddress(jsonObject.getString("address"));
                                 bikeInfo.setBicycleId(jsonObject.getInt("bicycleId"));
                                 bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
-                                bikeInfo.setLatitude(jsonObject.getString("latitude"));
-                                bikeInfo.setLongitude(jsonObject.getString("longitude"));
+                                bikeInfo.setLatitude(jsonObject.getDouble("latitude"));
+                                bikeInfo.setLongitude(jsonObject.getDouble("longitude"));
                                 bikeInfo.setUnitPrice(Float.valueOf(jsonObject.getString("unitPrice")));
                                 bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
                                 bikeInfos.add(bikeInfo);
@@ -596,8 +594,8 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                                 bikeInfo.setAddress(jsonObject.getString("address"));
                                 bikeInfo.setBicycleId(jsonObject.getInt("bicycleId"));
                                 bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
-                                bikeInfo.setLatitude(jsonObject.getString("latitude"));
-                                bikeInfo.setLongitude(jsonObject.getString("longitude"));
+                                bikeInfo.setLatitude(jsonObject.getDouble("latitude"));
+                                bikeInfo.setLongitude(jsonObject.getDouble("longitude"));
                                 bikeInfo.setUnitPrice(jsonObject.getInt("unitPrice"));
                                 bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
                                 bikeInfos.add(bikeInfo);
@@ -645,8 +643,8 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                                 bikeInfo.setAddress(jsonObject.getString("address"));
                                 bikeInfo.setBicycleId(jsonObject.getInt("bicycleId"));
                                 bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
-                                bikeInfo.setLatitude(jsonObject.getString("latitude"));
-                                bikeInfo.setLongitude(jsonObject.getString("longitude"));
+                                bikeInfo.setLatitude(jsonObject.getDouble("latitude"));
+                                bikeInfo.setLongitude(jsonObject.getDouble("longitude"));
                                 bikeInfo.setUnitPrice(jsonObject.getInt("unitPrice"));
                                 bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
                                 bikeInfos.add(bikeInfo);
@@ -670,21 +668,24 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             mMap.clear();
             //创建marker的显示图标
             BitmapDescriptor bitmap = BitmapDescriptorFactory.fromResource(R.mipmap.bike_icon);
-            LatLng latLng;
             List<Double> doubles = new ArrayList<>();
             for (int i = 0; i < bikeInfos.size(); i++) {
                 bikeInfo = (BikeInfo) bikeInfos.get(i);
-                String lat = bikeInfo.getLatitude();
-                String lng = bikeInfo.getLongitude();
-                double lat1 = Double.parseDouble(lat);
-                double lng1 = Double.parseDouble(lng);
-                latLng = new LatLng(lat1, lng1);
+                double lat = bikeInfo.getLatitude();
+                double lng = bikeInfo.getLongitude();
+                mLatLng = new LatLng(lat, lng);
+                CoordinateConverter converter = new CoordinateConverter();
+                converter.from(CoordinateConverter.CoordType.COMMON);
+                // sourceLatLng待转换坐标
+                converter.coord(mLatLng);
+                LatLng desLatLng = converter.convert();
+
 //                //两点之间直线距离的算法
 //                double distance1 = DistanceUtil.getDistance(latLng, currentLatLng);
 //                doubles.add(distance1);
                 //设置marker
                 OverlayOptions options = new MarkerOptions()
-                        .position(latLng)//设置位置
+                        .position(desLatLng)//设置位置
                         .icon(bitmap)//设置图标样式
                         .zIndex(i) // 设置marker所在层级
                         .draggable(true); // 设置手势拖拽;
@@ -713,16 +714,12 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                     int zIndex = marker.getZIndex();
                     integers.add(zIndex);
                     Bundle bundle = marker.getExtraInfo();
-                    clickMarkLatlng = marker.getPosition();
                     bikeInfo = (BikeInfo) bundle.getSerializable("bikeInfo");
                     if (bikeInfo != null) {
                         mSubclauses.setVisibility(View.GONE);
                         mBikeLayout.setVisibility(View.VISIBLE);
                         mCurrentAddr.setText(bikeInfo.getAddress());
-                        mUnitPrice.setText(String.valueOf(bikeInfo.getUnitPrice()));
-//                        if (menuWindow == null || !menuWindow.isShowing()) {
-//                            showMenuWindow(bikeInfo);
-//                        }
+                        mUnitPrice.setText(String.valueOf(bikeInfo.getUnitPrice()) + "元");
                         updateBikeInfo(bikeInfo);
                     }
                 }
@@ -744,11 +741,11 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                     mBikeLayout.setVisibility(View.GONE);
                     mSubclauses.setVisibility(View.VISIBLE);
                     if (mAll.isChecked()) {
-                        getBikeInfo(mCurrentLantitude, mCurrentLongitude);
+                        addOverlay(bikeInfos);
                     } else if (mTrouble.isChecked()) {
-                        getTroubleBikeInfo(mCurrentLantitude, mCurrentLongitude);
+                        addOverlay(bikeInfos);
                     } else if (mException.isChecked()) {
-                        getExceptionBikeInfo(mCurrentLantitude, mCurrentLongitude);
+                        addOverlay(bikeInfos);
                     }
                     setUserMapCenter(mCurrentLantitude, mCurrentLongitude);
                 }
@@ -764,12 +761,18 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     }
 
     private void updateBikeInfo(BikeInfo bikeInfo) {
-        mHasPlanRoute = false;
-        if (!mHasPlanRoute) {
+        boolean hasPlanRoute = false;
+        if (!hasPlanRoute) {
             this.bikeInfo = bikeInfo;
-            Double doulat = Double.valueOf(bikeInfo.getLatitude());
-            Double doulon = Double.valueOf(bikeInfo.getLongitude());
-            endNodeStr = PlanNode.withLocation(new LatLng(doulat, doulon));
+            Double doulat = bikeInfo.getLatitude();
+            Double doulon = bikeInfo.getLongitude();
+            mLatLng = new LatLng(doulat, doulon);
+            CoordinateConverter converter = new CoordinateConverter();
+            converter.from(CoordinateConverter.CoordType.COMMON);
+            // sourceLatLng待转换坐标
+            converter.coord(mLatLng);
+            LatLng desLatLng = converter.convert();
+            PlanNode endNodeStr = PlanNode.withLocation(desLatLng);
             StyledDialog.dismissLoading();
             drawPlanRoute(endNodeStr);
         }
@@ -778,9 +781,9 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     private void drawPlanRoute(PlanNode endNodeStr) {
         if (routeOverlay != null) {
             routeOverlay.removeFromMap();
-            mMap.clear();
-//            if (menuWindow != null && menuWindow.isShowing()) {
-            addOverlay(bikeInfos);
+//            mMap.clear();
+////            if (menuWindow != null && menuWindow.isShowing()) {
+//            addOverlay(bikeInfos);
 //            }
         }
         if (endNodeStr != null) {
@@ -807,6 +810,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         //在activity执行onDestroy时执行mMapView.onDestroy()，实现地图生命周期管理
         mMap.setMyLocationEnabled(false);
         mTestMapView.onDestroy();
+        EventBus.getDefault().unregister(this);
         StyledDialog.dismiss();
 
         if (mLocationClient != null) {
@@ -862,27 +866,29 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         }
 
         if (walkingRouteResult.error == SearchResult.ERRORNO.NO_ERROR) {
-            WalkingRouteLine walkingRouteLine = walkingRouteResult.getRouteLines().get(0);
-            int distance = walkingRouteLine.getDistance();
-            int walkTime = walkingRouteLine.getDuration() / 60;
-            LogUtils.d("gao", distance + "\n" + walkTime + "\n" + walkingRouteLine);
-            String distance1 = MapUtil.distanceFormatter(distance);
-            String castTime = String.valueOf(walkTime);
-            if (!distance1.equals("")) {
-                mDistance.setText(distance1);
-            }
-            if (!castTime.equals("")) {
-                mArrivalTime.setText(castTime + "分钟");
-            }
+            if (walkingRouteResult.getRouteLines().size() > 0) {
+                WalkingRouteLine walkingRouteLine = walkingRouteResult.getRouteLines().get(0);
+                int distance = walkingRouteLine.getDistance();
+                int walkTime = walkingRouteLine.getDuration() / 60;
+                LogUtils.d("gao", distance + "\n" + walkTime + "\n" + walkingRouteLine);
+                String distance1 = MapUtil.distanceFormatter(distance);
+                String castTime = String.valueOf(walkTime);
+                if (!distance1.equals("")) {
+                    mDistance.setText(distance1);
+                }
+                if (!castTime.equals("")) {
+                    mArrivalTime.setText(castTime + "分钟");
+                }
 
-        }
-        WalkingRouteOverlay overlay = new MyWalkingRouteOverlay(mMap);
-        mMap.setOnMarkerClickListener(overlay);
-        routeOverlay = overlay;
-        if (!overlay.equals("")) {
-            overlay.setData(walkingRouteResult.getRouteLines().get(0));
-            overlay.addToMap();
-            overlay.zoomToSpan();
+            }
+            WalkingRouteOverlay overlay = new MyWalkingRouteOverlay(mMap);
+            mMap.setOnMarkerClickListener(overlay);
+            routeOverlay = overlay;
+            if (!overlay.equals("") && overlay != null) {
+                overlay.setData(walkingRouteResult.getRouteLines().get(0));
+                overlay.addToMap();
+                overlay.zoomToSpan();
+            }
         }
     }
 
@@ -954,5 +960,22 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         return super.onKeyDown(keyCode, event);
     }
 
+
+    @Subscriber(tag = "bikeNo", mode = ThreadMode.MAIN)
+    private void receiveFromManual(CodeEvent info) {
+        LogUtils.d("输入", info.getBikeNo());
+        if (info != null) {
+            result = info.getBikeNo();
+            if (mUID != null && result != null && mToken != null) {
+                openScan(mUID, result, mToken);
+            }
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EventBus.getDefault().register(this);
+    }
 
 }
