@@ -39,6 +39,7 @@ import android.widget.ToggleButton;
 
 import com.dcch.sharebiketest.R;
 import com.dcch.sharebiketest.base.BaseActivity;
+import com.dcch.sharebiketest.base.CodeEvent;
 import com.dcch.sharebiketest.libzxing.zxing.camera.CameraManager;
 import com.dcch.sharebiketest.libzxing.zxing.decode.DecodeThread;
 import com.dcch.sharebiketest.libzxing.zxing.utils.BeepManager;
@@ -47,6 +48,8 @@ import com.dcch.sharebiketest.libzxing.zxing.utils.InactivityTimer;
 import com.dcch.sharebiketest.moudle.user.activity.ManualInputActivity;
 import com.dcch.sharebiketest.utils.DensityUtils;
 import com.google.zxing.Result;
+
+import org.simple.eventbus.EventBus;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -105,7 +108,7 @@ public final class CaptureActivity extends BaseActivity implements SurfaceHolder
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-
+        EventBus.getDefault().register(this);
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 //        setContentView(R.layout.activity_capture);
@@ -225,6 +228,7 @@ public final class CaptureActivity extends BaseActivity implements SurfaceHolder
     @Override
     protected void onDestroy() {
         inactivityTimer.shutdown();
+        EventBus.getDefault().unregister(this);
         super.onDestroy();
     }
 
@@ -262,12 +266,7 @@ public final class CaptureActivity extends BaseActivity implements SurfaceHolder
         inactivityTimer.onActivity();
         beepManager.playBeepSoundAndVibrate();
         final String rawResultText = rawResult.getText();
-        Intent resultIntent = new Intent();
-        bundle.putInt("width", mCropRect.width());
-        bundle.putInt("height", mCropRect.height());
-        bundle.putString("result", rawResultText);
-        resultIntent.putExtras(bundle);
-        CaptureActivity.this.setResult(RESULT_OK, resultIntent);
+        EventBus.getDefault().post(new CodeEvent(rawResultText),"iphone");
         CaptureActivity.this.finish();
     }
 

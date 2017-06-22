@@ -51,7 +51,7 @@ public class BikeInfo implements Serializable {
 
     private int bicycleId;
     private int bicycleNo;
-    private float unitPrice;
+    private String unitPrice;
     private String address;
     private String systemTime;
     private double longitude;
@@ -74,11 +74,11 @@ public class BikeInfo implements Serializable {
         this.bicycleNo = bicycleNo;
     }
 
-    public float getUnitPrice() {
+    public String getUnitPrice() {
         return unitPrice;
     }
 
-    public void setUnitPrice(float unitPrice) {
+    public void setUnitPrice(String unitPrice) {
         this.unitPrice = unitPrice;
     }
 

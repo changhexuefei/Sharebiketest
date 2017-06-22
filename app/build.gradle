@@ -11,8 +11,8 @@ android {
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         ndk {
-            //选择要添加的对应cpu类型的.so库。
-            abiFilters 'armeabi', 'armeabi-v8a', 'armeabi-v7a', 'x86', 'x86_64', 'mips64'
+            //选择要添加的对应cpu类型的.so库。, 'x86', 'x86_64'
+            abiFilters 'armeabi', 'armeabi-v8a', 'armeabi-v7a', 'mips64'
             // 还可以添加  'mips',
         }
     }
