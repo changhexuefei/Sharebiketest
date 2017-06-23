@@ -304,7 +304,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 MainActivityPermissionsDispatcher.showCameraWithCheck(MainActivity.this);
                 Intent i1 = new Intent(MainActivity.this, CaptureActivity.class);
                 i1.putExtra("msg", "main");
-                startActivityForResult(i1, 0);
+                startActivity(i1);
                 break;
             case R.id.btn_my_location:
                 if (ClickUtils.isFastClick()) {
@@ -745,7 +745,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             this.bikeInfo = bikeInfo;
             Double doulat = bikeInfo.getLatitude();
             Double doulon = bikeInfo.getLongitude();
-            PlanNode endNodeStr = PlanNode.withLocation(transform(doulat,doulon));
+            PlanNode endNodeStr = PlanNode.withLocation(transform(doulat, doulon));
             StyledDialog.dismissLoading();
             drawPlanRoute(endNodeStr);
         }
@@ -799,20 +799,11 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         //在activity执行onResume时执行mMapView. onResume ()，实现地图生命周期管理
         mTestMapView.onResume();
         if (SPUtils.isLogin()) {
-            String userDetail = (String) SPUtils.get(MyApp.getContext(), "userDetail", "");
-            JSONObject object;
-            try {
-                object = new JSONObject(userDetail);
-                int id = object.optInt("id");
-                mToken = object.optString("token");
-                mUID = String.valueOf(id);
-                Log.d("实验", "onResume");
-                LogUtils.d("实验", mToken + "\n" + mUID);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            mUID = (String) SPUtils.get(MyApp.getContext(), "id", "");
+            mToken = (String) SPUtils.get(MyApp.getContext(), "token", "");
+            Log.d("实验", "onResume");
+            LogUtils.d("实验", mToken + "\n" + mUID);
         }
-
     }
 
 
@@ -956,7 +947,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 result = result.substring(result.length() - 9, result.length());
                 LogUtils.d("锁号", result);
                 if (NetUtils.isConnected(MyApp.getContext())) {
-                    CheckRepairBicycleNo( result);
+                    CheckRepairBicycleNo(result);
                 }
             }
 

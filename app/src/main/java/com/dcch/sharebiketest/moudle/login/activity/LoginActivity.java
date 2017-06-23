@@ -22,6 +22,9 @@ import com.dcch.sharebiketest.utils.ToastUtils;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.StringCallback;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -96,11 +99,18 @@ public class LoginActivity extends BaseActivity {
             public void onResponse(String response, int id) {
                 LogUtils.d("登录结果", response);
                 if (JsonUtils.isSuccess(response)) {
-                    ToastUtils.showShort(LoginActivity.this, "登录成功");
-                    SPUtils.put(LoginActivity.this, "islogin", true);
-                    SPUtils.put(LoginActivity.this, "userDetail", response);
-                    startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                    LoginActivity.this.finish();
+                    try {
+                        JSONObject object = new JSONObject(response);
+                        ToastUtils.showShort(LoginActivity.this, "登录成功");
+                        SPUtils.put(LoginActivity.this, "islogin", true);
+                        SPUtils.put(LoginActivity.this, "token", object.optString("token"));
+                        SPUtils.put(LoginActivity.this, "id", object.optString("id"));
+                        startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                        LoginActivity.this.finish();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
                 } else {
                     ToastUtils.showShort(LoginActivity.this, "用户名或者密码错误！");
                 }
