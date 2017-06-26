@@ -949,8 +949,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                     CheckRepairBicycleNo(result);
                 }
             }
-
         }
     }
-
 }
