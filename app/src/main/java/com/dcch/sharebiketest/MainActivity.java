@@ -790,7 +790,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             mRPSearch.destroy();
         }
 
-
     }
 
     @Override
