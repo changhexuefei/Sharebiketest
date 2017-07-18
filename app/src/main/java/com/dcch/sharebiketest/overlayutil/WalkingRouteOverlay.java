@@ -15,6 +15,7 @@ import com.baidu.mapapi.map.Polyline;
 import com.baidu.mapapi.map.PolylineOptions;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.search.route.WalkingRouteLine;
+import com.dcch.sharebiketest.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,8 +34,7 @@ public class WalkingRouteOverlay extends OverlayManager {
     /**
      * 设置路线数据。
      *
-     * @param line
-     *            路线数据
+     * @param line 路线数据
      */
     public void setData(WalkingRouteLine line) {
         mRouteLine = line;
@@ -55,12 +55,12 @@ public class WalkingRouteOverlay extends OverlayManager {
                 if (step.getEntrance() != null) {
                     overlayList.add((new MarkerOptions())
                             .position(step.getEntrance().getLocation())
-                                    .rotate((360 - step.getDirection()))
-                                            .zIndex(10)
-                                                    .anchor(0.5f, 0.5f)
-                                                            .extraInfo(b)
-                                                                    .icon(BitmapDescriptorFactory
-                                                                            .fromAssetWithDpi("Icon_line_node.png")));
+                            .rotate((360 - step.getDirection()))
+                            .zIndex(10)
+                            .anchor(0.5f, 0.5f)
+                            .extraInfo(b)
+                            .icon(BitmapDescriptorFactory
+                                    .fromAssetWithDpi("Icon_line_node.png")));
                 }
 
                 // 最后路段绘制出口点
@@ -68,22 +68,23 @@ public class WalkingRouteOverlay extends OverlayManager {
                         .getAllStep().size() - 1) && step.getExit() != null) {
                     overlayList.add((new MarkerOptions())
                             .position(step.getExit().getLocation())
-                                    .anchor(0.5f, 0.5f)
-                                            .zIndex(10)
-                                                    .icon(BitmapDescriptorFactory
-                                                            .fromAssetWithDpi("Icon_line_node.png")));
+                            .anchor(0.5f, 0.5f)
+                            .zIndex(10)
+                            .icon(BitmapDescriptorFactory
+                                    .fromAssetWithDpi("Icon_line_node.png")));
 
                 }
             }
         }
-//        // starting
-//        if (mRouteLine.getStarting() != null) {
-//            overlayList.add((new MarkerOptions())
-//                    .position(mRouteLine.getStarting().getLocation())
-//                            .icon(getStartMarker() != null ? getStartMarker() :
-//                                    BitmapDescriptorFactory
-//                                            .fromAssetWithDpi("Icon_start.png")).zIndex(10));
-//        }
+        // starting
+        if (mRouteLine.getStarting() != null) {
+            overlayList.add((new MarkerOptions())
+                    .position(mRouteLine.getStarting().getLocation())
+                    .icon(getStartMarker() != null ? getStartMarker() :
+                            BitmapDescriptorFactory
+                                    .fromResource(R.drawable.start_ic))
+                    .zIndex(10));
+        }
         // terminal
 //        if (mRouteLine.getTerminal() != null) {
 //            overlayList
@@ -126,9 +127,11 @@ public class WalkingRouteOverlay extends OverlayManager {
     public BitmapDescriptor getStartMarker() {
         return null;
     }
+
     public int getLineColor() {
         return 0;
     }
+
     /**
      * 覆写此方法以改变默认终点图标
      *
@@ -141,10 +144,9 @@ public class WalkingRouteOverlay extends OverlayManager {
     /**
      * 处理点击事件
      *
-     * @param i
-     *            被点击的step在
-     *            {@link WalkingRouteLine#getAllStep()}
-     *            中的索引
+     * @param i 被点击的step在
+     *          {@link WalkingRouteLine#getAllStep()}
+     *          中的索引
      * @return 是否处理了该点击事件
      */
     public boolean onRouteNodeClick(int i) {

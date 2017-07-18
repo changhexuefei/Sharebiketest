@@ -59,16 +59,12 @@ public class SplashActivity extends BaseActivity {
         animation.setDuration(1000);
         animation.setFillAfter(true);
         mRlSplashRoot.startAnimation(animation);
-
     }
-
 
     private void switchPage() {
         if (SPUtils.isLogin()) {
-
             goMain();
         } else {
-
             goLogin();
         }
     }
@@ -114,10 +110,10 @@ public class SplashActivity extends BaseActivity {
         EventBus.getDefault().register(this);
         if (SPUtils.isFirst()) {
 //            handler.sendEmptyMessageDelayed(SWITCH_GUIDACTIVITY, 2000);
-            EventBus.getDefault().post(new MessageEvent(),"guide");
+            EventBus.getDefault().post(new MessageEvent(), "guide");
         } else {
 //            handler.sendEmptyMessageDelayed(SWITCH_SWITCHPAGE, 2000);
-            EventBus.getDefault().post(new MessageEvent(),"switch");
+            EventBus.getDefault().post(new MessageEvent(), "switch");
         }
     }
 

@@ -8,7 +8,6 @@ import java.io.Serializable;
 
 public class BikeInfo implements Serializable {
 
-
     /**
      * bicycleId : 21
      * bicycleNo : 1201000011
@@ -49,28 +48,28 @@ public class BikeInfo implements Serializable {
      * maxLng : null
      */
 
-    private int bicycleId;
-    private int bicycleNo;
+    private String bicycleNo;
     private String unitPrice;
     private String address;
     private String systemTime;
     private double longitude;
     private double latitude;
 
-
-    public int getBicycleId() {
-        return bicycleId;
+    public double getElectricity() {
+        return electricity;
     }
 
-    public void setBicycleId(int bicycleId) {
-        this.bicycleId = bicycleId;
+    public void setElectricity(double electricity) {
+        this.electricity = electricity;
     }
 
-    public int getBicycleNo() {
+    private double electricity;
+
+    public String getBicycleNo() {
         return bicycleNo;
     }
 
-    public void setBicycleNo(int bicycleNo) {
+    public void setBicycleNo(String bicycleNo) {
         this.bicycleNo = bicycleNo;
     }
 

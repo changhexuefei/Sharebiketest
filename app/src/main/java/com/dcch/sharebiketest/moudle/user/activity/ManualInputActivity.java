@@ -19,13 +19,14 @@ import com.dcch.sharebiketest.base.BaseActivity;
 import com.dcch.sharebiketest.base.CodeEvent;
 import com.dcch.sharebiketest.http.Api;
 import com.dcch.sharebiketest.utils.DensityUtils;
-import com.dcch.sharebiketest.utils.JsonUtils;
 import com.dcch.sharebiketest.utils.LogUtils;
 import com.dcch.sharebiketest.utils.ToastUtils;
 import com.dcch.sharebiketest.view.CodeInputEditText;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.StringCallback;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.simple.eventbus.EventBus;
 
 import java.util.HashMap;
@@ -62,7 +63,7 @@ public class ManualInputActivity extends BaseActivity {
         Intent intent = getIntent();
         if (intent != null) {
             mTag = intent.getStringExtra("tag");
-            LogUtils.d("空的",mTag);
+            LogUtils.d("空的", mTag);
         }
 
     }
@@ -135,24 +136,58 @@ public class ManualInputActivity extends BaseActivity {
                     public void onResponse(String response, int id) {
                         LogUtils.d("锁号", response);
                         //{"resultStatus":"0"}
-                        if (JsonUtils.isSuccess(response)) {
-                            if (mTag.equals("main")) {
-                                Intent bikeNoIntent = new Intent(ManualInputActivity.this, MainActivity.class);
-                                startActivity(bikeNoIntent);
-                                EventBus.getDefault().post(new CodeEvent(bikeNo), "bikeNo");
+                        try {
+                            JSONObject object = new JSONObject(response);
+                            String resultStatus = object.optString("resultStatus");
+                            switch (resultStatus) {
+                                case "1":
+                                    if (mTag.equals("main")) {
+                                        Intent bikeNoIntent = new Intent(ManualInputActivity.this, MainActivity.class);
+                                        startActivity(bikeNoIntent);
+                                        EventBus.getDefault().post(new CodeEvent(bikeNo), "bikeNo");
+                                    }
+                                    finish();
+                                    break;
+                                case "0":
+                                    clearTextView();
+                                    ToastUtils.showLong(ManualInputActivity.this, "车辆编号不存在。");
+
+
+                                    break;
+                                case "2":
+                                    clearTextView();
+                                    ToastUtils.showLong(ManualInputActivity.this, "您的账号在其他设备上登录，您被迫下线！");
+
+                                    break;
+                                case "3":
+                                    clearTextView();
+                                    ToastUtils.showLong(ManualInputActivity.this, "正在被使用");
+                                    break;
+                                case "4":
+                                    clearTextView();
+                                    ToastUtils.showLong(ManualInputActivity.this, "我是故障车");
+                                    break;
+
+                                case "5":
+                                    clearTextView();
+                                    ToastUtils.showLong(ManualInputActivity.this, "我已经被预约");
+                                    break;
                             }
-                            finish();
-                        } else {
-                            mManualInputArea.clearText();
-                            mEnsure.setEnabled(false);
-                            mEnsure.setBackgroundColor(Color.parseColor("#6b6b6b"));
-                            ToastUtils.showShort(ManualInputActivity.this, "该车辆编号不存在，请重新输入！");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
                     }
                 });
                 break;
         }
     }
+
+    private void clearTextView() {
+        mManualInputArea.clearText();
+        mEnsure.setEnabled(false);
+        mEnsure.setBackgroundColor(getColor(R.color.input_btn_color));
+    }
+
 
     @Override
     protected void onDestroy() {

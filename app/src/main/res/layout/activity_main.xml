@@ -36,16 +36,40 @@
                 android:textColor="@color/common"
                 android:textSize="18sp"/>
 
+            <TextView
+                android:id="@+id/lookingFor"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_gravity="end"
+                android:layout_marginRight="15dp"
+                android:gravity="center_vertical"
+                android:text="寻找车辆"
+                android:textColor="@color/white"
+                android:textSize="12sp"/>
         </FrameLayout>
 
-
-        <com.baidu.mapapi.map.MapView
-            android:id="@+id/testMapView"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_below="@+id/subclauses">
 
-        </com.baidu.mapapi.map.MapView>
+            <com.baidu.mapapi.map.MapView
+                android:id="@+id/testMapView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+            </com.baidu.mapapi.map.MapView>
+
+            <ImageView
+                android:id="@+id/centerIcon"
+                android:layout_width="15dp"
+                android:layout_height="50dp"
+                android:layout_centerInParent="true"
+                android:paddingBottom="25dp"
+                android:src="@drawable/search_center_ic"/>
+
+        </RelativeLayout>
+
 
         <RadioGroup
             android:id="@+id/subclauses"
@@ -80,13 +104,13 @@
         </RadioGroup>
 
         <LinearLayout
-            android:visibility="gone"
             android:id="@+id/bike_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/top"
             android:background="@color/white"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:visibility="gone">
 
             <TextView
                 android:id="@+id/current_addr"
@@ -133,7 +157,7 @@
                             android:layout_height="wrap_content"
                             android:layout_centerHorizontal="true"
                             android:layout_marginTop="10dp"
-                            android:text="1.0元"
+                            android:text="0.5元"
                             android:textColor="@color/colorTitle"/>
 
                         <TextView
@@ -200,6 +224,58 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_below="@+id/ride_time_area"
+                android:background="@color/colorTitle"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/bikeNo_area"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="15dp"
+                    android:text="车辆编号："
+                    android:textColor="@color/white"
+                    android:textSize="15sp"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/bike_number"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="5dp"
+                    android:layout_toRightOf="@+id/bikeNo_area"
+                    android:text="000000000"
+                    android:textColor="@color/white"/>
+
+
+                <TextView
+                    android:id="@+id/electric_quantity_area"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginRight="10dp"
+                    android:layout_toLeftOf="@+id/electric_quantity"
+                    android:text="电量"
+                    android:textColor="@color/white"/>
+
+                <TextView
+                    android:id="@+id/electric_quantity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginRight="15dp"
+                    android:text="0.0%"
+                    android:textColor="@color/white"
+                    android:textSize="15sp"
+                    android:textStyle="bold"/>
+            </RelativeLayout>
+
         </LinearLayout>
 
 
@@ -214,14 +290,14 @@
             android:drawableLeft="@mipmap/scan"
             android:drawablePadding="20dp"
             android:enabled="true"
-            android:gravity="center_vertical"
+            android:gravity="center"
             android:paddingBottom="15dp"
             android:paddingLeft="20dp"
             android:paddingRight="20dp"
             android:paddingTop="15dp"
             android:text="@string/unlocking"
             android:textColor="@color/white"
-            android:textSize="16sp"/>
+            android:textSize="12sp"/>
 
         <ImageButton
             android:id="@+id/btn_my_location"

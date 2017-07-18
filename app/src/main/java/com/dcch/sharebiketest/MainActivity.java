@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -39,6 +40,11 @@ import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.map.OverlayOptions;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.search.core.SearchResult;
+import com.baidu.mapapi.search.geocode.GeoCodeResult;
+import com.baidu.mapapi.search.geocode.GeoCoder;
+import com.baidu.mapapi.search.geocode.OnGetGeoCoderResultListener;
+import com.baidu.mapapi.search.geocode.ReverseGeoCodeOption;
+import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
 import com.baidu.mapapi.search.route.BikingRouteResult;
 import com.baidu.mapapi.search.route.DrivingRouteResult;
 import com.baidu.mapapi.search.route.IndoorRouteResult;
@@ -51,6 +57,7 @@ import com.baidu.mapapi.search.route.WalkingRouteLine;
 import com.baidu.mapapi.search.route.WalkingRoutePlanOption;
 import com.baidu.mapapi.search.route.WalkingRouteResult;
 import com.baidu.mapapi.utils.CoordinateConverter;
+import com.baidu.mapapi.utils.DistanceUtil;
 import com.dcch.sharebiketest.app.MyApp;
 import com.dcch.sharebiketest.base.AppManager;
 import com.dcch.sharebiketest.base.BaseActivity;
@@ -58,17 +65,21 @@ import com.dcch.sharebiketest.base.CodeEvent;
 import com.dcch.sharebiketest.http.Api;
 import com.dcch.sharebiketest.libzxing.zxing.activity.CaptureActivity;
 import com.dcch.sharebiketest.moudle.home.BikeInfo;
+import com.dcch.sharebiketest.moudle.home.QueryBikeInfo;
 import com.dcch.sharebiketest.moudle.listener.MyOrientationListener;
 import com.dcch.sharebiketest.moudle.login.activity.LoginActivity;
 import com.dcch.sharebiketest.overlayutil.OverlayManager;
 import com.dcch.sharebiketest.overlayutil.WalkingRouteOverlay;
 import com.dcch.sharebiketest.utils.ClickUtils;
+import com.dcch.sharebiketest.utils.JsonUtils;
 import com.dcch.sharebiketest.utils.LogUtils;
 import com.dcch.sharebiketest.utils.MapUtil;
 import com.dcch.sharebiketest.utils.NetUtils;
 import com.dcch.sharebiketest.utils.SPUtils;
 import com.dcch.sharebiketest.utils.ToastUtils;
+import com.google.gson.Gson;
 import com.hss01248.dialog.StyledDialog;
+import com.hss01248.dialog.interfaces.MyDialogListener;
 import com.zhy.http.okhttp.OkHttpUtils;
 import com.zhy.http.okhttp.callback.StringCallback;
 
@@ -93,7 +104,7 @@ import permissions.dispatcher.RuntimePermissions;
 
 
 @RuntimePermissions
-public class MainActivity extends BaseActivity implements OnGetRoutePlanResultListener {
+public class MainActivity extends BaseActivity implements OnGetRoutePlanResultListener, OnGetGeoCoderResultListener, BaiduMap.OnMapStatusChangeListener {
     @BindView(R.id.testMapView)
     MapView mTestMapView;
     @BindView(R.id.userCenter)
@@ -124,6 +135,14 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     TextView mArrivalTime;
     @BindView(R.id.bike_layout)
     LinearLayout mBikeLayout;
+    @BindView(R.id.bike_number)
+    TextView mBikeNumber;
+    @BindView(R.id.electric_quantity)
+    TextView mElectricQuantity;
+    @BindView(R.id.centerIcon)
+    ImageView mCenterIcon;
+    @BindView(R.id.lookingFor)
+    TextView mLookingFor;
     private BaiduMap mMap;
     private LocationClient mLocationClient;//定位的客户端
     private float mCurrentAccracy;//当前的精度
@@ -145,7 +164,13 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     private String mToken;
     private String mUID;
     private String result;
-
+    private GeoCoder mSearch = null;//地理编码
+    private String mReverseGeoCodeResultAddress;
+    private LatLng mMCenterLatLng;
+    private double mChangeLatitude;
+    private double mChangeLongitude;
+    private boolean isShowBikeInfo = false;
+    private String mBikeNo;
 
     @Override
     protected int getLayoutId() {
@@ -165,7 +190,8 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         TextView userName = (TextView) headerView.findViewById(R.id.userName);
         mRPSearch = RoutePlanSearch.newInstance();
         mRPSearch.setOnGetRoutePlanResultListener(this);
-
+        mSearch = GeoCoder.newInstance();
+        mSearch.setOnGetGeoCodeResultListener(this);
         bikeInfos = new ArrayList<>();
         mAll.setChecked(true);
         // 初始化定位
@@ -221,6 +247,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     @Override
     protected void initListener() {
         super.initListener();
+        mMap.setOnMapStatusChangeListener(this);
         mSubclauses.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup radioGroup, @IdRes int i) {
@@ -268,6 +295,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         });
     }
 
+
     private void initMyLocation() {
         // 定位初始化
         mLocationClient = new LocationClient(this);
@@ -294,7 +322,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         clickBaiduMap();
     }
 
-    @OnClick({R.id.userCenter, R.id.scan, R.id.btn_my_location})
+    @OnClick({R.id.userCenter, R.id.scan, R.id.btn_my_location, R.id.lookingFor})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.scan:
@@ -313,6 +341,8 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 if (routeOverlay != null) {
                     routeOverlay.removeFromMap();
                     mBikeLayout.setVisibility(View.GONE);
+                    mCenterIcon.setVisibility(View.VISIBLE);
+                    isShowBikeInfo = false;
                     mSubclauses.setVisibility(View.VISIBLE);
                     mMap.clear();
                     if (mAll.isChecked()) {
@@ -336,7 +366,69 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                     mActivityNa.openDrawer(mNav);
                 }
                 break;
+
+            case R.id.lookingFor:
+                if (ClickUtils.isFastClick()) {
+                    return;
+                }
+                StyledDialog.buildNormalInput(MainActivity.this, "寻车", "请输入车辆编号", "", "确定", "取消", new MyDialogListener() {
+                    @Override
+                    public void onFirst() {
+
+                    }
+
+                    @Override
+                    public void onSecond() {
+                        return;
+                    }
+
+                    @Override
+                    public void onGetInput(CharSequence input1, CharSequence input2) {
+                        super.onGetInput(input1, input2);
+                        if (input1 != null && !input1.equals("")) {
+                            mBikeNo = input1.toString();
+                            queryBikeNo(mBikeNo);
+                            LogUtils.d("输入", "input1:" + input1);
+                        }
+                    }
+                }).show();
+                break;
         }
+    }
+
+    private void queryBikeNo(String bikeNo) {
+        Map<String, String> map = new HashMap<>();
+        map.put("bicycleNo", bikeNo);
+        OkHttpUtils.post().url(Api.BASE_URL + Api.SEARCHBICYCLE).params(map).build().execute(new StringCallback() {
+            @Override
+            public void onError(Call call, Exception e, int id) {
+
+            }
+
+            @Override
+            public void onResponse(String response, int id) {
+                if (JsonUtils.isSuccess(response)) {
+                    LogUtils.d("信息", response);
+                    Gson gson = new Gson();
+                    QueryBikeInfo queryBikeInfo = gson.fromJson(response, QueryBikeInfo.class);
+                    mSubclauses.setVisibility(View.GONE);
+                    mBikeLayout.setVisibility(View.VISIBLE);
+                    mCenterIcon.setVisibility(View.GONE);
+                    mMap.clear();
+                    isShowBikeInfo = true;
+                    mElectricQuantity.setText(String.valueOf(queryBikeInfo.getBicycle().getElectricity()) + "%");
+                    mBikeNumber.setText(queryBikeInfo.getBicycle().getBicycleNo());
+                    forLocationAddMark(queryBikeInfo.getBicycle().getLatitude(), queryBikeInfo.getBicycle().getLongitude());
+                    reverseGeoCoder(transform(queryBikeInfo.getBicycle().getLatitude(), queryBikeInfo.getBicycle().getLongitude()));
+                    PlanNode endNodeStr = PlanNode.withLocation(transform(queryBikeInfo.getBicycle().getLatitude(), queryBikeInfo.getBicycle().getLongitude()));
+                    drawPlanRoute(endNodeStr);
+
+                } else {
+
+
+                }
+            }
+        });
     }
 
     private void CheckRepairBicycleNo(final String result) {
@@ -402,7 +494,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             OkHttpUtils.post().url(Api.BASE_URL + Api.OPENSCAN).params(map).build().execute(new StringCallback() {
                 @Override
                 public void onError(Call call, Exception e, int id) {
-
                     ToastUtils.showShort(MainActivity.this, "服务器忙，请稍后重试");
                 }
 
@@ -422,6 +513,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                             case "2":
                                 ToastUtils.showLong(MyApp.getContext(), "您的账号在其他设备上登录，您已被迫下线");
                                 startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                                SPUtils.put(MyApp.getContext(), "islogin", false);
                                 MainActivity.this.finish();
                                 break;
                         }
@@ -442,6 +534,64 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         mMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
     }
 
+    @Override
+    public void onGetGeoCodeResult(GeoCodeResult geoCodeResult) {
+
+    }
+
+    @Override
+    public void onGetReverseGeoCodeResult(ReverseGeoCodeResult reverseGeoCodeResult) {
+        if (reverseGeoCodeResult == null
+                || reverseGeoCodeResult.error != SearchResult.ERRORNO.NO_ERROR) {
+            // 没有检测到结果
+            Toast.makeText(MainActivity.this, "抱歉，未能找到结果",
+                    Toast.LENGTH_LONG).show();
+        }
+        mReverseGeoCodeResultAddress = reverseGeoCodeResult.getAddress();
+        if (mReverseGeoCodeResultAddress != null && !mReverseGeoCodeResultAddress.equals("")) {
+            mCurrentAddr.setText(mReverseGeoCodeResultAddress);
+
+        } else {
+            mCurrentAddr.setText("未知地址");
+        }
+    }
+
+    @Override
+    public void onMapStatusChangeStart(MapStatus mapStatus) {
+
+    }
+
+    @Override
+    public void onMapStatusChange(MapStatus mapStatus) {
+
+    }
+
+
+    @Override
+    public void onMapStatusChangeFinish(MapStatus mapStatus) {
+        if (!isShowBikeInfo) {
+            updateMapStatus(mapStatus);
+        }
+    }
+
+    private void updateMapStatus(MapStatus mapStatus) {
+//        mMap.clear();
+        mMCenterLatLng = mapStatus.target;
+        mChangeLatitude = mMCenterLatLng.latitude;
+        mChangeLongitude = mMCenterLatLng.longitude;
+        Log.i("中心点坐标", mChangeLatitude + "," + mChangeLongitude);
+        WindowManager wm = this.getWindowManager();
+        startNodeStr = PlanNode.withLocation(new LatLng(mChangeLatitude, mChangeLongitude));
+        LogUtils.d("谁选中了", mAll.isChecked() + "\n" + mTrouble.isChecked() + "\n" + mException.isChecked());
+        if (mAll.isChecked()) {
+            getBikeInfo(mChangeLatitude, mChangeLongitude);
+        } else if (mTrouble.isChecked()) {
+            getTroubleBikeInfo(mChangeLatitude, mChangeLongitude);
+        } else if (mException.isChecked()) {
+            getExceptionBikeInfo(mChangeLatitude, mChangeLongitude);
+        }
+
+    }
 
     //实现定位回调监听
     private class MyLocationListener implements BDLocationListener {
@@ -479,8 +629,8 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 //地图缩放比设置为18
                 builder.target(ll).zoom(18.0f);
                 mMap.animateMapStatus(MapStatusUpdateFactory.newMapStatus(builder.build()));
-                double changeLatitude = location.getLatitude();
-                double changeLongitude = location.getLongitude();
+                mChangeLatitude = location.getLatitude();
+                mChangeLongitude = location.getLongitude();
                 setUserMapCenter(mCurrentLantitude, mCurrentLongitude);
                 //根据手机定位地点，得到车辆信息的方法
                 getBikeInfo(mCurrentLantitude, mCurrentLongitude);
@@ -520,16 +670,14 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                                 Log.d("自行车", jsonObject + "");
                                 bikeInfo = new BikeInfo();
                                 bikeInfo.setAddress(jsonObject.getString("address"));
-                                bikeInfo.setBicycleId(jsonObject.getInt("bicycleId"));
-                                bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
+                                bikeInfo.setBicycleNo(jsonObject.getString("bicycleNo"));
                                 bikeInfo.setLatitude(jsonObject.getDouble("latitude"));
                                 bikeInfo.setLongitude(jsonObject.getDouble("longitude"));
                                 bikeInfo.setUnitPrice(jsonObject.getString("unitPrice"));
-                                bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
+                                bikeInfo.setElectricity(jsonObject.getDouble("electricity"));
                                 bikeInfos.add(bikeInfo);
                             }
                             addOverlay(bikeInfos);
-                            LogUtils.d("数量", bikeInfos.size() + "1");
                         }
 
                     } catch (JSONException e) {
@@ -566,14 +714,12 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                                 Log.d("自行车", jsonObject + "");
                                 bikeInfo = new BikeInfo();
                                 bikeInfo.setAddress(jsonObject.getString("address"));
-                                bikeInfo.setBicycleId(jsonObject.getInt("bicycleId"));
-                                bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
                                 bikeInfo.setLatitude(jsonObject.getDouble("latitude"));
                                 bikeInfo.setLongitude(jsonObject.getDouble("longitude"));
                                 bikeInfo.setUnitPrice(jsonObject.getString("unitPrice"));
-                                bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
+                                bikeInfo.setBicycleNo(jsonObject.getString("bicycleNo"));
+                                bikeInfo.setElectricity(jsonObject.getDouble("electricity"));
                                 bikeInfos.add(bikeInfo);
-
                             }
                             addOverlay(bikeInfos);
                             LogUtils.d("数量", bikeInfos.size() + "2");
@@ -613,15 +759,13 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                                 bikeInfo = new BikeInfo();
                                 bikeInfo.setAddress(jsonObject.getString("address"));
-                                bikeInfo.setBicycleId(jsonObject.getInt("bicycleId"));
-                                bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
                                 bikeInfo.setLatitude(jsonObject.getDouble("latitude"));
                                 bikeInfo.setLongitude(jsonObject.getDouble("longitude"));
                                 bikeInfo.setUnitPrice(jsonObject.getString("unitPrice"));
-                                bikeInfo.setBicycleNo(jsonObject.getInt("bicycleNo"));
+                                bikeInfo.setBicycleNo(jsonObject.getString("bicycleNo"));
+                                bikeInfo.setElectricity(jsonObject.getDouble("electricity"));
                                 bikeInfos.add(bikeInfo);
                             }
-                            LogUtils.d("数量", bikeInfos.size() + "3");
                             addOverlay(bikeInfos);
                         }
 
@@ -643,9 +787,13 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 bikeInfo = (BikeInfo) bikeInfos.get(i);
                 double lat = bikeInfo.getLatitude();
                 double lng = bikeInfo.getLongitude();
-                forLocationAddMark(lat, lng);
-            }
+                LatLng latLng = transform(lat, lng);
+                double distance = DistanceUtil.getDistance(latLng, mMCenterLatLng);
+                if (distance <= 400) {
+                    forLocationAddMark(lat, lng);
+                }
 
+            }
         } else {
             ToastUtils.showLong(this, "当前周围没有车辆");
         }
@@ -665,15 +813,13 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         BitmapDescriptor bitmap = BitmapDescriptorFactory.fromResource(R.mipmap.bike_icon);
         OverlayOptions options;
         LatLng latLng = transform(lat, lng);
-//        double distance = DistanceUtil.getDistance(latLng, mMCenterLatLng);
-//        Log.i("distance", String.valueOf(distance));
-        //设置marker
-//        if (distance < 2000) {
+        LogUtils.d("所有的经纬度", latLng.latitude + "\n" + latLng.longitude);
         options = new MarkerOptions()
                 .position(latLng)//设置位置
                 .icon(bitmap)//设置图标样式
                 .zIndex(9) // 设置marker所在层级
-                .draggable(true); // 设置手势拖拽;
+                .draggable(true)// 设置手势拖拽;
+                .animateType(MarkerOptions.MarkerAnimateType.grow);
         //添加marker
         mMarker = (Marker) mMap.addOverlay(options);
         Bundle bundle = new Bundle();
@@ -697,6 +843,10 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                     if (bikeInfo != null) {
                         mSubclauses.setVisibility(View.GONE);
                         mBikeLayout.setVisibility(View.VISIBLE);
+                        mCenterIcon.setVisibility(View.GONE);
+                        isShowBikeInfo = true;
+                        mElectricQuantity.setText(String.valueOf(bikeInfo.getElectricity()) + "%");
+                        mBikeNumber.setText(bikeInfo.getBicycleNo());
                         mCurrentAddr.setText(bikeInfo.getAddress());
                         mUnitPrice.setText(bikeInfo.getUnitPrice() + "元");
                         updateBikeInfo(bikeInfo);
@@ -704,9 +854,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 }
                 return true;
             }
-
         });
-
     }
 
     //点击百度地图的方法
@@ -714,19 +862,23 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         mMap.setOnMapClickListener(new BaiduMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                if (routeOverlay != null) {
-                    routeOverlay.removeFromMap();
-                    mMap.clear();
-                    mBikeLayout.setVisibility(View.GONE);
-                    mSubclauses.setVisibility(View.VISIBLE);
-                    if (mAll.isChecked()) {
-                        addOverlay(bikeInfos);
-                    } else if (mTrouble.isChecked()) {
-                        addOverlay(bikeInfos);
-                    } else if (mException.isChecked()) {
-                        addOverlay(bikeInfos);
+                if (isShowBikeInfo) {
+                    if (routeOverlay != null) {
+                        routeOverlay.removeFromMap();
+//                        mMap.clear();
+                        mBikeLayout.setVisibility(View.GONE);
+                        mCenterIcon.setVisibility(View.VISIBLE);
+                        isShowBikeInfo = false;
+                        mSubclauses.setVisibility(View.VISIBLE);
+//                        if (mAll.isChecked()) {
+//                            addOverlay(bikeInfos);
+//                        } else if (mTrouble.isChecked()) {
+//                            addOverlay(bikeInfos);
+//                        } else if (mException.isChecked()) {
+//                            addOverlay(bikeInfos);
+//                        }
+                        setUserMapCenter(mCurrentLantitude, mCurrentLongitude);
                     }
-                    setUserMapCenter(mCurrentLantitude, mCurrentLongitude);
                 }
             }
 
@@ -736,7 +888,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             }
         });
 
-
     }
 
     private void updateBikeInfo(BikeInfo bikeInfo) {
@@ -745,6 +896,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             this.bikeInfo = bikeInfo;
             Double doulat = bikeInfo.getLatitude();
             Double doulon = bikeInfo.getLongitude();
+            reverseGeoCoder(transform(doulat, doulon));
             PlanNode endNodeStr = PlanNode.withLocation(transform(doulat, doulon));
             StyledDialog.dismissLoading();
             drawPlanRoute(endNodeStr);
@@ -800,8 +952,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         if (SPUtils.isLogin()) {
             mUID = (String) SPUtils.get(MyApp.getContext(), "id", "");
             mToken = (String) SPUtils.get(MyApp.getContext(), "token", "");
-            Log.d("实验", "onResume");
-            LogUtils.d("实验", mToken + "\n" + mUID);
         }
     }
 
@@ -946,9 +1096,15 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 result = result.substring(result.length() - 9, result.length());
                 LogUtils.d("锁号", result);
                 if (NetUtils.isConnected(MyApp.getContext())) {
-                    CheckRepairBicycleNo(result);
+//                    CheckRepairBicycleNo(result);
+                    openScan(mUID, result, mToken);
                 }
             }
         }
     }
+
+    private void reverseGeoCoder(LatLng latlng) {
+        mSearch.reverseGeoCode(new ReverseGeoCodeOption().location(latlng));
+    }
+
 }
