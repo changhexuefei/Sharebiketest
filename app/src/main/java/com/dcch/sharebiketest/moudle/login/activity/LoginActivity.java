@@ -81,6 +81,8 @@ public class LoginActivity extends BaseActivity {
         }
         if (NetUtils.isConnected(MyApp.getContext())) {
             login(userName, pwd);
+        }else{
+            ToastUtils.showShort(LoginActivity.this,"当前无网络连接，请检查网络后登录！");
         }
 
     }
