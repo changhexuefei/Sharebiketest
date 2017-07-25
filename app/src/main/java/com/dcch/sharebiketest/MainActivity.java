@@ -388,7 +388,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                         if (input1 != null && !input1.equals("")) {
                             mBikeNo = input1.toString();
                             queryBikeNo(mBikeNo);
-                            LogUtils.d("输入", "input1:" + input1);
                         }
                     }
                 }).show();
@@ -418,11 +417,12 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                     isShowBikeInfo = true;
                     mElectricQuantity.setText(String.valueOf(queryBikeInfo.getBicycle().getElectricity()) + "%");
                     mBikeNumber.setText(queryBikeInfo.getBicycle().getBicycleNo());
-                    forLocationAddMark(queryBikeInfo.getBicycle().getLatitude(), queryBikeInfo.getBicycle().getLongitude());
-                    reverseGeoCoder(transform(queryBikeInfo.getBicycle().getLatitude(), queryBikeInfo.getBicycle().getLongitude()));
-                    PlanNode endNodeStr = PlanNode.withLocation(transform(queryBikeInfo.getBicycle().getLatitude(), queryBikeInfo.getBicycle().getLongitude()));
-                    drawPlanRoute(endNodeStr);
-
+                    if (!queryBikeInfo.getBicycle().getLatitude().equals("") && !queryBikeInfo.getBicycle().getLongitude().equals("")) {
+                        forLocationAddMark(Double.valueOf(queryBikeInfo.getBicycle().getLatitude()), Double.valueOf(queryBikeInfo.getBicycle().getLongitude()));
+                        reverseGeoCoder(transform(Double.valueOf(queryBikeInfo.getBicycle().getLatitude()), Double.valueOf(queryBikeInfo.getBicycle().getLongitude())));
+                        PlanNode endNodeStr = PlanNode.withLocation(transform(Double.valueOf(queryBikeInfo.getBicycle().getLatitude()), Double.valueOf(queryBikeInfo.getBicycle().getLongitude())));
+                        drawPlanRoute(endNodeStr);
+                    }
                 } else {
 
 
@@ -722,7 +722,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                                 bikeInfos.add(bikeInfo);
                             }
                             addOverlay(bikeInfos);
-                            LogUtils.d("数量", bikeInfos.size() + "2");
                         }
 
                     } catch (JSONException e) {
@@ -789,10 +788,13 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 double lng = bikeInfo.getLongitude();
                 LatLng latLng = transform(lat, lng);
                 double distance = DistanceUtil.getDistance(latLng, mMCenterLatLng);
-                if (distance <= 400) {
+                if (mTrouble.isChecked()) {
                     forLocationAddMark(lat, lng);
+                } else {
+                    if (distance <= 400) {
+                        forLocationAddMark(lat, lng);
+                    }
                 }
-
             }
         } else {
             ToastUtils.showLong(this, "当前周围没有车辆");
