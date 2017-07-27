@@ -103,6 +103,7 @@ import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.RuntimePermissions;
 
 
+@SuppressWarnings("ALL")
 @RuntimePermissions
 public class MainActivity extends BaseActivity implements OnGetRoutePlanResultListener, OnGetGeoCoderResultListener, BaiduMap.OnMapStatusChangeListener {
     @BindView(R.id.testMapView)
@@ -147,25 +148,24 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     private LocationClient mLocationClient;//定位的客户端
     private float mCurrentAccracy;//当前的精度
     private int mXDirection;//方向传感器X方向的值
-    private MyLocationConfiguration.LocationMode mCurrentMode = MyLocationConfiguration.LocationMode.NORMAL;//当前定位的模式
+    private final MyLocationConfiguration.LocationMode mCurrentMode = MyLocationConfiguration.LocationMode.NORMAL;//当前定位的模式
     private volatile boolean isFristLocation = true;//是否是第一次定位
     private MyOrientationListener myOrientationListener;//方向传感器的监听器
     private double mCurrentLantitude;//最新一次的经纬度
     private double mCurrentLongitude;
-    public MyLocationListener mMyLocationListener;//定位的监听器
+    private MyLocationListener mMyLocationListener;//定位的监听器
     private List<BikeInfo> bikeInfos;
     private BikeInfo bikeInfo;
-    Marker mMarker = null;
+    private Marker mMarker = null;
     private PlanNode startNodeStr;
-    OverlayManager routeOverlay = null;//该类提供一个能够显示和管理多个Overlay的基类
-    RoutePlanSearch mRPSearch = null;    // 搜索模块，也可去掉地图模块独立使用
-    boolean useDefaultIcon = false;
+    private OverlayManager routeOverlay = null;//该类提供一个能够显示和管理多个Overlay的基类
+    private RoutePlanSearch mRPSearch = null;    // 搜索模块，也可去掉地图模块独立使用
+    private final boolean useDefaultIcon = false;
     private long mExitTime; //退出时间
     private String mToken;
     private String mUID;
     private String result;
     private GeoCoder mSearch = null;//地理编码
-    private String mReverseGeoCodeResultAddress;
     private LatLng mMCenterLatLng;
     private double mChangeLatitude;
     private double mChangeLongitude;
@@ -379,7 +379,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
 
                     @Override
                     public void onSecond() {
-                        return;
                     }
 
                     @Override
@@ -547,9 +546,9 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             Toast.makeText(MainActivity.this, "抱歉，未能找到结果",
                     Toast.LENGTH_LONG).show();
         }
-        mReverseGeoCodeResultAddress = reverseGeoCodeResult.getAddress();
-        if (mReverseGeoCodeResultAddress != null && !mReverseGeoCodeResultAddress.equals("")) {
-            mCurrentAddr.setText(mReverseGeoCodeResultAddress);
+        String reverseGeoCodeResultAddress = reverseGeoCodeResult != null ? reverseGeoCodeResult.getAddress() : null;
+        if (reverseGeoCodeResultAddress != null && !reverseGeoCodeResultAddress.equals("")) {
+            mCurrentAddr.setText(reverseGeoCodeResultAddress);
 
         } else {
             mCurrentAddr.setText("未知地址");
@@ -894,15 +893,13 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
 
     private void updateBikeInfo(BikeInfo bikeInfo) {
         boolean hasPlanRoute = false;
-        if (!hasPlanRoute) {
-            this.bikeInfo = bikeInfo;
-            Double doulat = bikeInfo.getLatitude();
-            Double doulon = bikeInfo.getLongitude();
-            reverseGeoCoder(transform(doulat, doulon));
-            PlanNode endNodeStr = PlanNode.withLocation(transform(doulat, doulon));
-            StyledDialog.dismissLoading();
-            drawPlanRoute(endNodeStr);
-        }
+        this.bikeInfo = bikeInfo;
+        Double doulat = bikeInfo.getLatitude();
+        Double doulon = bikeInfo.getLongitude();
+        reverseGeoCoder(transform(doulat, doulon));
+        PlanNode endNodeStr = PlanNode.withLocation(transform(doulat, doulon));
+        StyledDialog.dismissLoading();
+        drawPlanRoute(endNodeStr);
     }
 
     private void drawPlanRoute(PlanNode endNodeStr) {
@@ -970,7 +967,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         if (walkingRouteResult == null || walkingRouteResult.error != SearchResult.ERRORNO.NO_ERROR) {
             Toast.makeText(MainActivity.this, "抱歉，未找到结果", Toast.LENGTH_SHORT).show();
         }
-        if (walkingRouteResult.error == SearchResult.ERRORNO.AMBIGUOUS_ROURE_ADDR) {
+        if ((walkingRouteResult != null ? walkingRouteResult.error : null) == SearchResult.ERRORNO.AMBIGUOUS_ROURE_ADDR) {
             //起终点或途经点地址有岐义，通过以下接口获取建议查询信息
 //                    result.getSuggestAddrInfo();
             return;
@@ -995,7 +992,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
             WalkingRouteOverlay overlay = new MyWalkingRouteOverlay(mMap);
             mMap.setOnMarkerClickListener(overlay);
             routeOverlay = overlay;
-            if (!overlay.equals("") && overlay != null) {
+            if (!overlay.equals("")) {
                 overlay.setData(walkingRouteResult.getRouteLines().get(0));
                 overlay.addToMap();
                 overlay.zoomToSpan();
@@ -1075,11 +1072,9 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     @Subscriber(tag = "bikeNo", mode = ThreadMode.MAIN)
     private void receiveFromManual(CodeEvent info) {
         LogUtils.d("输入", info.getBikeNo());
-        if (info != null) {
-            result = info.getBikeNo();
-            if (mUID != null && result != null && mToken != null) {
-                openScan(mUID, result, mToken);
-            }
+        result = info.getBikeNo();
+        if (mUID != null && result != null && mToken != null) {
+            openScan(mUID, result, mToken);
         }
     }
 
