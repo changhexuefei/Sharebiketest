@@ -51,7 +51,6 @@ public class OpenCameraInterface {
                 }
                 index++;
             }
-
             cameraId = index;
         }
 
