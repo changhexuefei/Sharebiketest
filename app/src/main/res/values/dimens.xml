@@ -2,5 +2,5 @@
 <resources>
     <dimen name="shadow_width">0dp</dimen>
     <dimen name="slidingmenu_offset">120dp</dimen>
-    <dimen name="bike_layout_margin">10sp</dimen>
+    <dimen name="bike_layout_margin">10dp</dimen>
 </resources>

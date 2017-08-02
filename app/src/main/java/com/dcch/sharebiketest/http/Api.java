@@ -24,5 +24,7 @@ public class Api {
     public static final String CHECKREPAIRBICYCLENO = "CheckRepairBicycleNo.do?";
     //手工输入车辆编号，查询车辆状态
     public static final String SEARCHBICYCLE = "searchBicycle.do?";
+    //寻车铃
+    public static final String FINDBIKERING = "FindBikeRing.do?";
 
 }

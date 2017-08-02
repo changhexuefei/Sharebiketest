@@ -3,6 +3,7 @@ package com.dcch.sharebiketest;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
@@ -19,6 +20,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -128,8 +130,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     DrawerLayout mActivityNa;
     @BindView(R.id.current_addr)
     TextView mCurrentAddr;
-    @BindView(R.id.unitPrice)
-    TextView mUnitPrice;
+
     @BindView(R.id.distance)
     TextView mDistance;
     @BindView(R.id.arrivalTime)
@@ -144,6 +145,10 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     ImageView mCenterIcon;
     @BindView(R.id.lookingFor)
     TextView mLookingFor;
+    @BindView(R.id.ring_down)
+    RelativeLayout mRingDown;
+    @BindView(R.id.forBellIcon)
+    ImageView mForBellIcon;
     private BaiduMap mMap;
     private LocationClient mLocationClient;//定位的客户端
     private float mCurrentAccracy;//当前的精度
@@ -415,7 +420,9 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                     mMap.clear();
                     isShowBikeInfo = true;
                     mElectricQuantity.setText(String.valueOf(queryBikeInfo.getBicycle().getElectricity()) + "%");
-                    mBikeNumber.setText(queryBikeInfo.getBicycle().getBicycleNo());
+                    String bicycleNo = queryBikeInfo.getBicycle().getBicycleNo();
+                    mBikeNumber.setText(bicycleNo);
+                    ringDownRing(bicycleNo);
                     if (!queryBikeInfo.getBicycle().getLatitude().equals("") && !queryBikeInfo.getBicycle().getLongitude().equals("")) {
                         forLocationAddMark(Double.valueOf(queryBikeInfo.getBicycle().getLatitude()), Double.valueOf(queryBikeInfo.getBicycle().getLongitude()));
                         reverseGeoCoder(transform(Double.valueOf(queryBikeInfo.getBicycle().getLatitude()), Double.valueOf(queryBikeInfo.getBicycle().getLongitude())));
@@ -790,7 +797,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 if (mTrouble.isChecked()) {
                     forLocationAddMark(lat, lng);
                 } else {
-                    if (distance <= 400) {
+                    if (distance <= 500) {
                         forLocationAddMark(lat, lng);
                     }
                 }
@@ -849,13 +856,50 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                         mElectricQuantity.setText(String.valueOf(bikeInfo.getElectricity()) + "%");
                         mBikeNumber.setText(bikeInfo.getBicycleNo());
                         mCurrentAddr.setText(bikeInfo.getAddress());
-                        mUnitPrice.setText(bikeInfo.getUnitPrice() + "元");
+                        String bicycleNo = bikeInfo.getBicycleNo();
+                        ringDownRing(bicycleNo);
                         updateBikeInfo(bikeInfo);
                     }
                 }
                 return true;
             }
         });
+    }
+
+    private void ringDownRing(final String bikeNo) {
+        mRingDown.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (ClickUtils.isFastClick()) {
+                    return;
+                }
+                mForBellIcon.setImageResource(R.drawable.frame);
+                AnimationDrawable anim = (AnimationDrawable) mForBellIcon.getDrawable();
+                anim.start();
+                String time = "5";
+                ringDown(bikeNo, time);
+            }
+        });
+    }
+
+
+    private void ringDown(String bicycleNo, String time) {
+        Map<String, String> map = new HashMap<>();
+        map.put("bicycleNo", bicycleNo);
+        map.put("Count", time);
+        LogUtils.d("错误", bicycleNo + "\n" + time);
+        OkHttpUtils.post().url(Api.BASE_URL + Api.FINDBIKERING).params(map).build().execute(new StringCallback() {
+            @Override
+            public void onError(Call call, Exception e, int id) {
+                ToastUtils.showShort(MainActivity.this, "网络正忙，请稍后再试！");
+            }
+
+            @Override
+            public void onResponse(String response, int id) {
+                LogUtils.d("响铃", response);
+            }
+        });
+
     }
 
     //点击百度地图的方法
