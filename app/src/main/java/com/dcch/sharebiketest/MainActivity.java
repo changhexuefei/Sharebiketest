@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.AnimationDrawable;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
@@ -40,6 +41,7 @@ import com.baidu.mapapi.map.MarkerOptions;
 import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.map.OverlayOptions;
+import com.baidu.mapapi.map.Projection;
 import com.baidu.mapapi.model.LatLng;
 import com.baidu.mapapi.search.core.SearchResult;
 import com.baidu.mapapi.search.geocode.GeoCodeResult;
@@ -176,6 +178,8 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     private double mChangeLongitude;
     private boolean isShowBikeInfo = false;
     private String mBikeNo;
+    private LatLng startLng, finishLng;
+
 
     @Override
     protected int getLayoutId() {
@@ -564,7 +568,7 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
 
     @Override
     public void onMapStatusChangeStart(MapStatus mapStatus) {
-
+        startLng = mapStatus.target;
     }
 
     @Override
@@ -575,20 +579,33 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
 
     @Override
     public void onMapStatusChangeFinish(MapStatus mapStatus) {
-        if (!isShowBikeInfo) {
-            updateMapStatus(mapStatus);
+        finishLng = mapStatus.target;
+        if (startLng.latitude != finishLng.latitude
+                || startLng.longitude != finishLng.longitude) {
+            Projection ject = mMap.getProjection();
+            Point startPoint = ject.toScreenLocation(startLng);
+            Point finishPoint = ject.toScreenLocation(finishLng);
+            double x = Math.abs(finishPoint.x - startPoint.x);
+            double y = Math.abs(finishPoint.y - startPoint.y);
+            LogUtils.d("移动", x + "\n" + y);
+            double moveDist = 50.0;
+            if (x > moveDist || y > moveDist) {
+                //在这处理滑动
+                if (!isShowBikeInfo) {
+                    updateMapStatus(mapStatus);
+                }
+            }
         }
     }
 
     private void updateMapStatus(MapStatus mapStatus) {
-//        mMap.clear();
+        mMap.clear();
         mMCenterLatLng = mapStatus.target;
         mChangeLatitude = mMCenterLatLng.latitude;
         mChangeLongitude = mMCenterLatLng.longitude;
         Log.i("中心点坐标", mChangeLatitude + "," + mChangeLongitude);
         WindowManager wm = this.getWindowManager();
         startNodeStr = PlanNode.withLocation(new LatLng(mChangeLatitude, mChangeLongitude));
-        LogUtils.d("谁选中了", mAll.isChecked() + "\n" + mTrouble.isChecked() + "\n" + mException.isChecked());
         if (mAll.isChecked()) {
             getBikeInfo(mChangeLatitude, mChangeLongitude);
         } else if (mTrouble.isChecked()) {
@@ -843,7 +860,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
         mMap.setOnMarkerClickListener(new BaiduMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(final Marker marker) {
-
                 if (marker.getExtraInfo() != null) {
                     StyledDialog.buildMdLoading(MainActivity.this, "路线规划中..", true, false).show();
                     Bundle bundle = marker.getExtraInfo();
@@ -910,7 +926,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
                 if (isShowBikeInfo) {
                     if (routeOverlay != null) {
                         routeOverlay.removeFromMap();
-//                        mMap.clear();
                         mBikeLayout.setVisibility(View.GONE);
                         mCenterIcon.setVisibility(View.VISIBLE);
                         isShowBikeInfo = false;
@@ -971,7 +986,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        //在activity执行onDestroy时执行mMapView.onDestroy()，实现地图生命周期管理
         mMap.setMyLocationEnabled(false);
         mTestMapView.onDestroy();
         EventBus.getDefault().unregister(this);
@@ -990,7 +1004,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     @Override
     protected void onResume() {
         super.onResume();
-        //在activity执行onResume时执行mMapView. onResume ()，实现地图生命周期管理
         mTestMapView.onResume();
         if (SPUtils.isLogin()) {
             mUID = (String) SPUtils.get(MyApp.getContext(), "id", "");
@@ -1002,7 +1015,6 @@ public class MainActivity extends BaseActivity implements OnGetRoutePlanResultLi
     @Override
     protected void onPause() {
         super.onPause();
-        //在activity执行onPause时执行mMapView. onPause ()，实现地图生命周期管理
         mTestMapView.onPause();
     }
 
